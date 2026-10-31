@@ -1,4 +1,3 @@
-// Fase 1 - Pruebas de cimientos: ListaEnlazada, Tarea/Nota (orden y serialización) y utilidades de Texto.
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
@@ -58,18 +57,18 @@ int main() {
         for (int valor : soloLectura) suma += valor;
         CHECK(suma == 10);
     }
-    {  // ── Tarea y Nota ──
-        auto antigua = Tarea::deserializar("7|Reunión|0|0|2|0");  // formato anterior, sin estilo de evento
+    {
+        auto antigua = Tarea::deserializar("7|Reunión|0|0|2|0");
         CHECK(antigua && antigua->estiloEvento().empty() && antigua->id() == 7);
         Tarea evento("Entrevista", 0, false, Prioridad::Alta, "formal");
         auto recuperada = Tarea::deserializar(evento.serializar());
         CHECK(recuperada && recuperada->estiloEvento() == "formal" && recuperada->titulo() == "Entrevista");
 
-        Tarea con_barra("a|b\nc", 0, false, Prioridad::Baja);  // los separadores no deben romper la línea
+        Tarea con_barra("a|b\nc", 0, false, Prioridad::Baja);
         auto r2 = Tarea::deserializar(con_barra.serializar());
         CHECK(r2 && r2->titulo() == "a b c");
 
-        auto rara = Tarea::deserializar("5|Tarea|0|0|99|0");  // prioridad fuera de rango -> Media
+        auto rara = Tarea::deserializar("5|Tarea|0|0|99|0");
         CHECK(rara && rara->prioridad() == Prioridad::Media);
         CHECK(!Tarea::deserializar("-3|Tarea|0|0|2|0"));
         CHECK(!Tarea::deserializar("basura sin campos"));
@@ -78,7 +77,6 @@ int main() {
         auto n2 = Nota::deserializar(nota.serializar());
         CHECK(n2 && n2->contenido() == "El parcial es el viernes" && n2->categoria() == "Universidad");
 
-        // Orden de urgencia: pendiente < completada; prioridad alta primero; fecha cercana primero; sin fecha al final
         Tarea alta("alta", 2000, false, Prioridad::Alta), baja("baja", 1000, false, Prioridad::Baja);
         Tarea sinFecha("sin fecha", 0, false, Prioridad::Alta), hecha("hecha", 10, false, Prioridad::Alta);
         hecha.completar();
@@ -87,7 +85,7 @@ int main() {
         CHECK(baja < hecha);
         CHECK(!(hecha < alta));
     }
-    {  // ── Texto ──
+    {
         CHECK(texto::normalizar("¡Reunión MAÑANA, a las 4:30 p.m.!") == "reunion manana a las 4:30 pm");
         CHECK(texto::normalizar("Año nuevo 😀 ñandú") == "ano nuevo nandu");
         auto n = texto::normalizarConMapa("Café  grande");
