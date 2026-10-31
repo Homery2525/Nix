@@ -9,7 +9,7 @@ std::string limpiar(std::string s) {
     for (char& c : s) if (c == '|' || c == '\n' || c == '\r') c = ' ';
     return s;
 }
-// Parte por '|' en a lo sumo `max` campos (el último se queda con el resto).
+
 std::vector<std::string> partir(const std::string& linea, size_t max) {
     std::vector<std::string> campos;
     size_t ini = 0;
@@ -22,7 +22,7 @@ std::vector<std::string> partir(const std::string& linea, size_t max) {
     campos.push_back(linea.substr(ini));
     return campos;
 }
-}  // namespace
+}
 
 Tarea::Tarea(std::string titulo, std::time_t cuando, bool tieneHora, Prioridad prioridad, std::string estiloEvento)
     : titulo_(std::move(titulo)), cuando_(cuando), tieneHora_(tieneHora), prioridad_(prioridad), estiloEvento_(std::move(estiloEvento)) {}
@@ -48,8 +48,8 @@ std::optional<Tarea> Tarea::deserializar(const std::string& linea) {
     try {
         const int prio = std::stoi(c[4]);
         const int id = std::stoi(c[0]);
-        if (id < 0) return std::nullopt;  // id negativo = línea corrupta: se descarta en vez de cargar basura
-        // Prioridad fuera de rango (archivo editado a mano o dañado) -> Media, en lugar de un enum inválido.
+        if (id < 0) return std::nullopt;
+        
         const Prioridad prioridad = (prio >= 1 && prio <= 3) ? static_cast<Prioridad>(prio) : Prioridad::Media;
         Tarea t(c[1], static_cast<std::time_t>(std::stoll(c[2])), c[3] == "1", prioridad, c.size() == 7 ? c[6] : "");
         t.id_ = id;
