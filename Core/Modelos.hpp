@@ -1,3 +1,4 @@
+// Modelos.hpp - Clases del dominio: Tarea y Nota.
 #pragma once
 #include <ctime>
 #include <optional>
@@ -37,6 +38,7 @@ public:
     void reabrir() { completada_ = false; }
     void reprogramar(std::time_t cuando, bool tieneHora) { cuando_ = cuando; tieneHora_ = tieneHora; }
 
+    // Orden de urgencia: pendientes primero, luego prioridad alta, luego fecha más cercana.
     bool operator<(const Tarea& otra) const;
 
     std::string serializar() const;  // id|titulo|cuando|tieneHora|prioridad|completada|estiloEvento

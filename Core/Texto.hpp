@@ -1,3 +1,4 @@
+// Texto.hpp - Utilidades de limpieza de texto (UTF-8 -> ASCII minúsculas sin tildes).
 #pragma once
 #include <cctype>
 #include <cstddef>
@@ -7,21 +8,24 @@
 #include <vector>
 
 namespace texto {
+
+// Texto normalizado + mapa hacia el texto original, para poder recuperar
+// las palabras con tildes y mayúsculas al extraer el "asunto".
 struct Normalizado {
-    std::string s;                                  
-    std::vector<std::pair<size_t, size_t>> origen;
+    std::string s;                                  // minúsculas, sin tildes ni puntuación
+    std::vector<std::pair<size_t, size_t>> origen;  // por cada char de s: (offset, longitud) en el original
 };
 
 inline Normalizado normalizarConMapa(const std::string& in) {
     Normalizado r;
     auto push = [&](char c, size_t off, size_t len) {
-        if (c == ' ' && (r.s.empty() || r.s.back() == ' ')) return;
+        if (c == ' ' && (r.s.empty() || r.s.back() == ' ')) return;  // colapsa espacios
         r.s.push_back(c);
         r.origen.emplace_back(off, len);
     };
     for (size_t i = 0; i < in.size();) {
         unsigned char c = static_cast<unsigned char>(in[i]);
-        if (c == 0xC3 && i + 1 < in.size()) {
+        if (c == 0xC3 && i + 1 < in.size()) {  // letras latinas con tilde (2 bytes)
             unsigned char d = static_cast<unsigned char>(in[i + 1]);
             char m = ' ';
             switch (d) {
@@ -68,6 +72,10 @@ inline std::vector<std::string> dividir(const std::string& s) {
     if (!cur.empty()) out.push_back(cur);
     return out;
 }
+
+// ¿La frase normalizada contiene esta palabra/expresión completa?
+// Búsqueda directa con comprobación de límites de palabra: no reserva memoria (antes creaba dos
+// cadenas nuevas en cada llamada y el NLU la invoca ~150 veces por frase).
 inline bool contiene(std::string_view norm, std::string_view expr) {
     if (expr.empty()) return false;
     for (size_t pos = norm.find(expr); pos != std::string_view::npos; pos = norm.find(expr, pos + 1)) {
@@ -79,4 +87,4 @@ inline bool contiene(std::string_view norm, std::string_view expr) {
     return false;
 }
 
-}
+}  // namespace texto
