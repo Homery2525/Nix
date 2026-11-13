@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nix</title>
+<style>
+  :root {  /* tema dorado (como el holograma de la referencia) */
+    --rgb: 255, 182, 74; --fondo: #070401; --brillo-fondo: #2a1a06; --cian: #ffb64a;
+    --cian-suave: rgba(var(--rgb), .6); --cian-tenue: rgba(var(--rgb), .14);
+    --blanco: #fff1d6; --alerta: #ff7a45; --borde: rgba(var(--rgb), .3);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: radial-gradient(ellipse at 50% 30%, var(--brillo-fondo) 0%, var(--fondo) 62%) fixed;
+    color: var(--blanco); font: 15px/1.5 "Helvetica Neue", "SF Pro Text", system-ui, sans-serif; overflow: hidden;
+  }
+  body::before { /* retícula holográfica muy tenue */
+    content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .5;
+    background-image: linear-gradient(var(--cian-tenue) 1px, transparent 1px), linear-gradient(90deg, var(--cian-tenue) 1px, transparent 1px);
+    background-size: 56px 56px; mask-image: radial-gradient(circle at 50% 40%, #000 0%, transparent 70%);
+    -webkit-mask-image: radial-gradient(circle at 50% 40%, #000 0%, transparent 70%);
+  }
+  #app { position: relative; display: grid; grid-template-rows: auto 1fr; height: 100%; max-width: 1280px; margin: 0 auto; padding: 14px 18px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .marca { margin-left: -8px; letter-spacing: .5em; font-weight: 300; font-size: 26px; color: var(--cian); text-shadow: 0 0 14px var(--cian-suave); }
+  #estado { font: 12px ui-monospace, Menlo, monospace; letter-spacing: .25em; color: var(--cian-suave); text-transform: uppercase; }
+  .acciones { display: flex; gap: 8px; }
+  button, select, input, a.boton {
+    font: inherit; color: var(--blanco); background: rgba(var(--rgb), .07); border: 1px solid var(--borde);
+    border-radius: 8px; padding: 7px 12px; cursor: pointer; text-decoration: none; transition: background .15s, box-shadow .15s;
+  }
+  button:hover, a.boton:hover { background: rgba(var(--rgb), .18); box-shadow: 0 0 14px rgba(var(--rgb), .25); }
+  button:disabled { opacity: .45; cursor: default; }
+  input, select { cursor: text; width: 100%; }
+  select { cursor: pointer; }
+  main { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr); gap: 18px; min-height: 0; padding-top: 10px; }
+  #centro { display: grid; grid-template-rows: auto 1fr auto; gap: 8px; min-height: 0; }
+  #hud { display: flex; flex-direction: column; align-items: center; }
+  #lienzo { display: block; max-width: 100%; }
+  #parcial { min-height: 22px; font-style: italic; color: var(--cian-suave); text-align: center; }
+  #temporizadores { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 0; }
+  .chip { border: 1px solid var(--borde); border-radius: 999px; padding: 1px 11px; font: 12px ui-monospace, Menlo, monospace;
+          color: var(--cian); background: var(--cian-tenue); }
+  #chat { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px 2px; min-height: 0; }
+  .msg { max-width: 88%; padding: 8px 12px; border-radius: 10px; white-space: pre-wrap; border: 1px solid var(--borde); }
+  .msg.usuario { align-self: flex-end; background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .18); }
+  .msg.jarvis { align-self: flex-start; background: var(--cian-tenue); box-shadow: inset 3px 0 0 var(--cian); }
+  .msg.error { box-shadow: inset 3px 0 0 var(--alerta); border-color: rgba(255, 180, 84, .4); }
+  .etiqueta { display: block; font: 10px ui-monospace, Menlo, monospace; letter-spacing: .2em; color: var(--cian-suave); margin-bottom: 2px; }
+  #entrada { display: flex; gap: 8px; }
+  #btnMic.activo { background: var(--cian); color: #1a0f00; box-shadow: 0 0 20px var(--cian); }
+  aside { display: flex; flex-direction: column; gap: 10px; min-height: 0; border: 1px solid var(--borde); border-radius: 12px; padding: 12px;
+          background: color-mix(in srgb, var(--fondo) 72%, var(--cian)); backdrop-filter: blur(4px); }
+  .pestanas { display: flex; gap: 6px; }
+  .pestanas button { flex: 1; }
+  .pestanas button.on { background: rgba(var(--rgb), .25); }
+  #listas { overflow-y: auto; min-height: 0; flex: 1; }
+  .item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--cian-tenue); }
+  .item .cuerpo { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .item small { display: block; color: var(--cian-suave); }
+  .item .tipo-evento { display: inline-block; margin-top: 3px; padding: 1px 6px; border: 1px solid var(--borde); border-radius: 8px; font-size: 10px; }
+  .item.hecha .titulo { text-decoration: line-through; opacity: .5; }
+  .item.alta .titulo::before { content: "▲ "; color: var(--alerta); }
+  .item button { padding: 2px 9px; }
+  .vacio { color: var(--cian-suave); padding: 10px 0; }
+  dialog { background: color-mix(in srgb, var(--fondo) 88%, var(--cian)); color: var(--blanco); border: 1px solid var(--borde); border-radius: 14px; padding: 20px; width: min(520px, 92vw); }
+  dialog::backdrop { background: rgba(0, 0, 0, .65); }
+  dialog h2 { margin: 0 0 12px; font-weight: 300; letter-spacing: .3em; color: var(--cian); font-size: 15px; }
+  label { display: block; margin: 12px 0 4px; font-size: 12px; letter-spacing: .12em; color: var(--cian-suave); text-transform: uppercase; }
+  .nota { font-size: 12px; color: var(--cian-suave); margin-top: 4px; }
+  .fila { display: flex; gap: 8px; }
+  @media (max-width: 860px) {
+    body { overflow: auto; } #app { height: auto; min-height: 100%; }
+    main { grid-template-columns: 1fr; } #chat { max-height: 40vh; } aside { max-height: 60vh; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  /* ── Closet ── */
+  #closet { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 0; flex: 1; }
+  #closet[hidden] { display: none; }
+  #closet .fila > * { min-width: 0; }
+  .filtros button { padding: 3px 8px; font-size: 13px; }
+  .grupo { margin: 10px 0 2px; font: 11px ui-monospace, Menlo, monospace; letter-spacing: .2em; color: var(--cian-suave); text-transform: uppercase; }
+  .etiqueta-estilo { display: inline-block; margin-right: 6px; padding: 0 7px; border: 1px solid var(--borde); border-radius: 8px; font-size: 11px; }
+  .etiqueta-estilo.formal { color: var(--cian); }
+  .outfit { margin-top: 8px; padding: 8px 10px; border: 1px dashed var(--borde); border-radius: 10px; background: rgba(var(--rgb), .06); }
+  .outfit .fila-outfit { display: flex; gap: 10px; padding: 2px 0; }
+  .outfit .et { width: 62px; font: 10px ui-monospace, Menlo, monospace; letter-spacing: .15em; color: var(--cian-suave); text-transform: uppercase; padding-top: 3px; }
+  .outfit .falta { color: var(--alerta); font-style: italic; }
+  .outfit small { display: block; margin-top: 4px; color: var(--cian-suave); }
+  #panelOutfit { border-top: 1px solid var(--cian-tenue); margin-top: 6px; padding-top: 6px; }
+  .chk { display: flex; align-items: center; gap: 6px; margin: 0; white-space: nowrap; letter-spacing: 0; text-transform: none; font-size: 13px; }
+  .chk input { width: auto; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <span class="marca">NIX</span>
+    <span id="estado">EN ESPERA</span>
+    <div class="acciones">
+    </div>
+  </header>
+  <main>
+    <section id="centro">
+      <div id="hud">
+      </div>
+      <div id="chat" aria-live="polite"></div>
+      <div id="entrada">
+        <input id="texto" placeholder="Escriba una orden: «agendar reunión mañana a las 4», «guarda mi camisa azul»…" autocomplete="off">
+        <button id="btnEnviar" aria-label="Enviar">Enviar</button>
+      </div>
+    </section>
+    <aside>
+      <div class="pestanas">
+        <button id="pTareas" class="on">Pendientes</button>
+        <button id="pNotas">Notas</button>
+        <button id="pCloset">Closet</button>
+      </div>
+      <div id="listas"></div>
+      <div id="closet" hidden>
+        <input id="cNombre" maxlength="60" placeholder="Prenda (p. ej. camisa azul)" aria-label="Nombre de la prenda">
+        <div class="fila">
+          <select id="cCategoria" aria-label="Categoría">
+            <option value="superior">Parte de arriba</option><option value="inferior">Parte de abajo</option>
+            <option value="calzado">Calzado</option><option value="abrigo">Abrigo</option>
+          </select>
+          <select id="cEstilo" aria-label="Estilo"><option value="formal">Formal</option><option value="informal">Informal</option></select>
+        </div>
+        <div class="fila"><input id="cColor" maxlength="20" placeholder="Color" aria-label="Color"><button id="cGuardar">Guardar</button></div>
+        <div class="nota" id="cMensaje">También puede decir «guarda mi camisa azul, es formal».</div>
+        <div class="pestanas filtros">
+          <button data-f="todo" class="on">Todo</button><button data-f="formal">Formal</button><button data-f="informal">Informal</button>
+        </div>
+        <div id="listaCloset"></div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+"use strict";
+const $ = (s) => document.querySelector(s);
+const ETIQUETAS = { reposo: "EN ESPERA", escuchando: "ESCUCHANDO", pensando: "PROCESANDO", hablando: "HABLANDO" };
+const CATEGORIAS = [["superior", "Parte de arriba"], ["inferior", "Parte de abajo"], ["calzado", "Calzado"], ["abrigo", "Abrigos"]];
+const nombreCategoria = (c) => (CATEGORIAS.find((x) => x[0] === c) || [c, c])[1];
+let estado = "reposo";
+let ajustes = { trato: "señor", proveedor: "claude", nivel: "equilibrado", claves: {} };
+let pestana = "tareas";
+let filtroCloset = "todo";
+
+// ───────────── API ─────────────
+async function api(ruta, cuerpo) {
+  const opciones = cuerpo === undefined ? {} : {
+    method: "POST", headers: { "Content-Type": "application/json", "X-Jarvis": "1" }, body: JSON.stringify(cuerpo),
+  };
+  const r = await fetch(ruta, opciones);
+  if (!r.ok) {
+    let motivo = "HTTP " + r.status;
+    try { motivo = (await r.json()).error || motivo; } catch (e) { /* sin cuerpo JSON */ }
+    throw new Error(motivo);
+  }
+  return r.json();
+}
+
+// ───────────── Estado y chat ─────────────
+function poner(nuevo) {
+  estado = nuevo;
+  $("#estado").textContent = ETIQUETAS[nuevo];
+}
+
+function el(tag, clase, texto) {
+  const e = document.createElement(tag);
+  if (clase) e.className = clase;
+  if (texto !== undefined) e.textContent = texto;
+  return e;
+}
+
+// Tarjeta «Outfit sugerido»: las prendas reales del closet (o lo que falta).
+function tarjetaOutfit(o) {
+  const t = el("div", "outfit");
+  [["superior", "Arriba"], ["inferior", "Abajo"], ["calzado", "Calzado"], ["abrigo", "Abrigo"]].forEach(([k, etiqueta]) => {
+    if (k === "abrigo" && !o.abrigo && !o.faltantes.some((f) => f.startsWith("abrigo"))) return;
+    const fila = el("div", "fila-outfit");
+    fila.append(el("span", "et", etiqueta), el("span", o[k] ? "" : "falta", o[k] ? o[k].nombre : "falta"));
+    t.append(fila);
+  });
+  if (o.faltantes.length) t.append(el("small", "", "Le falta: " + o.faltantes.join(", ")));
+  return t;
+}
+
+function agregar(rol, texto, origen, outfit) {
+  if (!texto) return;
+  const div = document.createElement("div");
+  div.className = "msg " + rol + (origen === "error" ? " error" : "");
+  const et = document.createElement("span");
+  et.className = "etiqueta";
+  et.textContent = rol === "usuario" ? "USTED" : "NIX" + (origen === "nube" ? " · NUBE" : "");
+  div.append(et, document.createTextNode(texto));
+  if (outfit) div.append(tarjetaOutfit(outfit));
+  $("#chat").append(div);
+  $("#chat").scrollTop = $("#chat").scrollHeight;
+}
+
+async function enviar(texto) {
+  texto = texto.trim();
+  if (!texto) { poner("reposo"); return; }
+  agregar("usuario", texto);
+  poner("pensando");
+  try {
+    const r = await api("/api/mensaje", { texto });
+    agregar("jarvis", r.respuesta, r.origen, r.outfit);
+    poner("reposo");
+    refrescar();
+  } catch (e) {
+    const m = "Me temo que he perdido la conexión con el servidor, " + ajustes.trato + ".";
+    agregar("jarvis", m, "error");
+    poner("reposo");
+  }
+}
+
+// ───────────── Paneles ─────────────
+function filaPrenda(p) {
+  const fila = el("div", "item");
+  const cuerpo = el("div", "cuerpo");
+  cuerpo.append(el("span", "titulo", p.nombre));
+  const meta = el("small", "");
+  meta.append(el("span", "etiqueta-estilo " + p.estilo, p.estilo), document.createTextNode(nombreCategoria(p.categoria) + (p.color ? " · " + p.color : "")));
+  cuerpo.append(meta);
+  const del = el("button", "", "✕"); del.title = "Quitar del closet";
+  del.onclick = async () => { await api("/api/closet/eliminar", { id: p.id }); refrescar(); };
+  fila.append(cuerpo, del);
+  return fila;
+}
+
+async function pintarCloset() {
+  const { prendas } = await api("/api/closet");
+  const cont = $("#listaCloset");
+  cont.replaceChildren();
+  if (!prendas.length) { cont.append(el("div", "vacio", "Su closet está vacío. Guarde una prenda aquí o diga «guarda mi camisa azul, es formal».")); return; }
+  const visibles = prendas.filter((p) => filtroCloset === "todo" || p.estilo === filtroCloset);
+  if (!visibles.length) { cont.append(el("div", "vacio", "No hay prendas con ese filtro.")); return; }
+  visibles.forEach((p) => cont.append(filaPrenda(p)));
+}
+
+async function guardarPrenda() {
+  const msg = $("#cMensaje");
+  try {
+    await api("/api/closet/agregar", { nombre: $("#cNombre").value, categoria: $("#cCategoria").value,
+                                        color: $("#cColor").value, estilo: $("#cEstilo").value });
+    $("#cNombre").value = ""; $("#cColor").value = "";
+    msg.textContent = "Prenda guardada.";
+    refrescar();
+  } catch (e) { msg.textContent = "No se pudo guardar: " + e.message; }
+}
+
+async function refrescar() {
+  const cont = $("#listas");
+  try {
+    if (pestana === "tareas") {
+      const { tareas } = await api("/api/tareas");
+      cont.replaceChildren();
+      if (!tareas.length) cont.append(el("div", "vacio", "Sin tareas. Pruebe: «agendar reunión mañana a las 4»."));
+      tareas.forEach((t) => {
+        const fila = el("div", "item" + (t.completada ? " hecha" : "") + (t.prioridad === 3 ? " alta" : ""));
+        const cuerpo = el("div", "cuerpo");
+        cuerpo.append(el("span", "titulo", t.titulo));
+        if (t.cuando) cuerpo.append(el("small", "", t.cuando));
+        if (t.estiloEvento) cuerpo.append(el("small", "tipo-evento", "Evento " + t.estiloEvento));
+        fila.append(cuerpo);
+        if (!t.completada) {
+          const ok = el("button", "", "✓"); ok.title = "Completar";
+          ok.onclick = async () => { await api("/api/tarea/completar", { id: t.id }); refrescar(); };
+          fila.append(ok);
+        }
+        const del = el("button", "", "✕"); del.title = "Eliminar";
+        del.onclick = async () => { await api("/api/tarea/eliminar", { id: t.id }); refrescar(); };
+        fila.append(del);
+        cont.append(fila);
+      });
+    } else if (pestana === "notas") {
+      const { notas } = await api("/api/notas");
+      cont.replaceChildren();
+      if (!notas.length) cont.append(el("div", "vacio", "Sin notas. Pruebe: «anota que el parcial es el viernes»."));
+      notas.forEach((n) => {
+        const fila = el("div", "item");
+        const cuerpo = el("div", "cuerpo");
+        cuerpo.append(el("span", "titulo", n.contenido), el("small", "", n.categoria));
+        const del = el("button", "", "✕"); del.title = "Eliminar";
+        del.onclick = async () => { await api("/api/nota/eliminar", { id: n.id }); refrescar(); };
+        fila.append(cuerpo, del);
+        cont.append(fila);
+      });
+    } else {
+      await pintarCloset();
+    }
+  } catch (e) { /* servidor reiniciándose */ }
+}
+
+function elegirPestana(p) {
+  pestana = p;
+  $("#pTareas").classList.toggle("on", p === "tareas");
+  $("#pNotas").classList.toggle("on", p === "notas");
+  $("#pCloset").classList.toggle("on", p === "closet");
+  $("#listas").hidden = p === "closet";
+  $("#closet").hidden = p !== "closet";
+  refrescar();
+}
+
+// ───────────── Arranque ─────────────
+$("#btnEnviar").onclick = () => { const t = $("#texto").value; $("#texto").value = ""; enviar(t); };
+$("#texto").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#btnEnviar").click(); });
+$("#pTareas").onclick = () => elegirPestana("tareas");
+$("#pNotas").onclick = () => elegirPestana("notas");
+$("#pCloset").onclick = () => elegirPestana("closet");
+$("#cGuardar").onclick = guardarPrenda;
+$("#cNombre").addEventListener("keydown", (e) => { if (e.key === "Enter") guardarPrenda(); });
+document.querySelectorAll(".filtros button").forEach((b) => {
+  b.onclick = () => {
+    filtroCloset = b.dataset.f;
+    document.querySelectorAll(".filtros button").forEach((x) => x.classList.toggle("on", x === b));
+    refrescar();
+  };
+});
+
+(async function iniciar() {
+  try {
+    await api("/api/tareas");
+    agregar("jarvis", "Todos los sistemas en línea. A sus órdenes, " + ajustes.trato + ".");
+  } catch (e) {
+    agregar("jarvis", "No logro conectar con el servidor de Nix.", "error");
+  }
+  refrescar();
+})();
+</script>
+</body>
+</html>
