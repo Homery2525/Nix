@@ -1,4 +1,4 @@
-// Nix (hito 3): servidor web mínimo con interfaz, tareas, notas y closet. Solo sockets: no necesita libcurl.
+// Nix (hito 4): servidor web con interfaz, tareas, notas, closet, habilidades sin IA y clima.
 #include <csignal>
 #include <cstdlib>
 #include <iostream>
@@ -17,8 +17,16 @@ std::string entorno(const char* clave, const std::string& def = "") {
 
 }  // namespace
 
-int main() {
+int main(int argc, char** argv) {
     const int puerto = std::atoi(entorno("PORT", "8080").c_str());
+
+    if (argc > 1 && std::string(argv[1]) == "--salud") {  // para el HEALTHCHECK de Docker
+        try {
+            return httpCurl("GET", "http://127.0.0.1:" + std::to_string(puerto) + "/salud", "", {}, 3).estado == 200 ? 0 : 1;
+        } catch (...) {
+            return 1;
+        }
+    }
     std::signal(SIGPIPE, SIG_IGN);
     std::signal(SIGTERM, alRecibirSenal);
     std::signal(SIGINT, alRecibirSenal);
@@ -27,6 +35,8 @@ int main() {
     cfg.web = entorno("JARVIS_WEB", "./web");
     cfg.datos = entorno("JARVIS_DATA", "./datos");
     cfg.tratoInicial = entorno("JARVIS_TRATO", "señor");
+    cfg.ciudadInicial = entorno("JARVIS_CIUDAD");
+    cfg.zonaInicial = entorno("TZ", "UTC");
 
     Servidor app(cfg);
     ServidorHttp http(puerto, [&app](const PeticionHttp& p) { return app.manejar(p); });

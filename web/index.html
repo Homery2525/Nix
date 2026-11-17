@@ -106,6 +106,8 @@
   <main>
     <section id="centro">
       <div id="hud">
+        <div id="temporizadores"></div>
+        <span id="clima" class="chip" hidden></span>
       </div>
       <div id="chat" aria-live="polite"></div>
       <div id="entrada">
@@ -150,6 +152,7 @@ let estado = "reposo";
 let ajustes = { trato: "señor", proveedor: "claude", nivel: "equilibrado", claves: {} };
 let pestana = "tareas";
 let filtroCloset = "todo";
+let climaActual = null;
 
 // ───────────── API ─────────────
 async function api(ruta, cuerpo) {
@@ -212,13 +215,72 @@ async function enviar(texto) {
   try {
     const r = await api("/api/mensaje", { texto });
     agregar("jarvis", r.respuesta, r.origen, r.outfit);
+    if (r.accion) manejarAccion(r.accion);
     poner("reposo");
     refrescar();
+    if (r.habilidad) cargarClima();
   } catch (e) {
     const m = "Me temo que he perdido la conexión con el servidor, " + ajustes.trato + ".";
     agregar("jarvis", m, "error");
     poner("reposo");
   }
+}
+
+// ───────────── Temporizadores ─────────────
+let temporizadores = [];  // { fin (ms), etiqueta }
+
+function pitido() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext, a = new AC();
+    [0, 0.35, 0.7].forEach((d) => {
+      const o = a.createOscillator(), g = a.createGain();
+      o.frequency.value = 880; g.gain.value = 0.15; o.connect(g); g.connect(a.destination);
+      o.start(a.currentTime + d); o.stop(a.currentTime + d + 0.2);
+    });
+  } catch (e) { /* sin audio */ }
+}
+
+function manejarAccion(a) {
+  if (a.tipo === "temporizador") temporizadores.push({ fin: Date.now() + a.segundos * 1000, etiqueta: a.etiqueta });
+  if (a.tipo === "cancelar_temporizadores") temporizadores = [];
+  dibujarTemporizadores();
+}
+
+function dibujarTemporizadores() {
+  const cont = $("#temporizadores");
+  cont.replaceChildren();
+  const ahora = Date.now();
+  temporizadores.forEach((t) => {
+    const s = Math.max(0, Math.round((t.fin - ahora) / 1000)), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    const txt = (h ? h + ":" + String(m).padStart(2, "0") : String(m).padStart(2, "0")) + ":" + String(s % 60).padStart(2, "0");
+    cont.append(el("span", "chip", "⏱ " + txt + " · " + t.etiqueta));
+  });
+}
+
+setInterval(() => {
+  const ahora = Date.now();
+  const hechos = temporizadores.filter((t) => t.fin <= ahora);
+  if (hechos.length) {
+    temporizadores = temporizadores.filter((t) => t.fin > ahora);
+    const texto = hechos.map((t) => "han transcurrido " + t.etiqueta).join(" y ");
+    const frase = texto.charAt(0).toUpperCase() + texto.slice(1) + ", " + ajustes.trato + ".";
+    agregar("jarvis", frase);
+    pitido();
+  }
+  if (temporizadores.length || hechos.length) dibujarTemporizadores();
+}, 1000);
+
+// ───────────── Clima (pieza «ConsejoClima» del servidor) ─────────────
+async function cargarClima() {
+  const chip = $("#clima");
+  try {
+    const c = await api("/api/clima");
+    climaActual = c;
+    if (!c.disponible) { chip.hidden = true; return; }
+    chip.hidden = false;
+    chip.textContent = "☂ " + c.probabilidadLluvia + "% · " + Math.round(c.temperaturaMaxima) + "°C · " + c.ciudad +
+      (c.abrigo ? " · lleve abrigo" : "");
+  } catch (e) { chip.hidden = true; }
 }
 
 // ───────────── Paneles ─────────────
@@ -242,7 +304,12 @@ async function pintarCloset() {
   if (!prendas.length) { cont.append(el("div", "vacio", "Su closet está vacío. Guarde una prenda aquí o diga «guarda mi camisa azul, es formal».")); return; }
   const visibles = prendas.filter((p) => filtroCloset === "todo" || p.estilo === filtroCloset);
   if (!visibles.length) { cont.append(el("div", "vacio", "No hay prendas con ese filtro.")); return; }
-  visibles.forEach((p) => cont.append(filaPrenda(p)));
+  CATEGORIAS.forEach(([clave, titulo]) => {
+    const grupo = visibles.filter((p) => p.categoria === clave);
+    if (!grupo.length) return;
+    cont.append(el("div", "grupo", titulo + " · " + grupo.length));
+    grupo.forEach((p) => cont.append(filaPrenda(p)));
+  });
 }
 
 async function guardarPrenda() {
@@ -333,6 +400,8 @@ document.querySelectorAll(".filtros button").forEach((b) => {
     agregar("jarvis", "No logro conectar con el servidor de Nix.", "error");
   }
   refrescar();
+  cargarClima();
+  setInterval(cargarClima, 600000);
 })();
 </script>
 </body>

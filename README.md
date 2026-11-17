@@ -1,31 +1,32 @@
-NIX: 
-Es un asistente personal en español para organizar la vida diaria:
-puede gestionar tareas pendientes, guardar notas, administrar un closet de ropa y sugerir combinaciones según la ocasión.
-Funciona como una app web/chat con interfaz sencilla y también expone una API para interactuar con sus funciones. 
-La lista que usa Nix para tareas, notas y closet está construida sobre la biblioteca **DeSiGNAR** (`Designar::DLList`).
+# Nix — Hito 4 de 6: Servidor completo, habilidades y clima
+
+Asistente personal en español escrito en **C++17**. Este paquete es un hito acumulativo: contiene todo lo de los hitos anteriores
+más lo que se describe en [FASE_4.md](FASE_4.md). La lista que usa Nix para tareas, notas y closet está construida sobre la
+biblioteca **DeSiGNAR** (`Designar::DLList`).
 
 ## Estructura
 ```
-nix_fase3/
+nix_fase4/
 ├── include/            ← todos los .hpp (núcleo y servidor)
 ├── src/                ← todos los .cpp
 │   └── pruebas/        ← pruebas (también .cpp)
-├── web/                ← interfaz gráfica (chat, pendientes, notas y closet)
+├── web/                ← interfaz gráfica (chat, closet por categoría, temporizadores y clima)
 ├── CMakeLists.txt      ← compilación (CMake ≥ 3.20, C++17)
 ├── Dockerfile · docker-compose.yml · .dockerignore · .env.example
 ├── probar.sh           ← atajo: configura, compila y ejecuta las pruebas
+└── FASE_4.md           ← qué incluye este hito
 ```
 
 ## DeSiGNAR
 [DeSiGNAR](https://r3mmurd.github.io/DeSiGNAR) es una biblioteca de estructuras de datos y algoritmos en C++17 (repositorio:
 https://github.com/r3mmurd/DeSiGNAR). Nix la usa en un único punto, `include/Estructuras.hpp`: la clase `ListaEnlazada<T>` conserva
-la interfaz de siempre (`push_back`, `insertarOrdenado`, `erase`, `comoVector`…) y puede guardar sus elementos en una
-`Designar::DLList<T>` (`#include <list.hpp>`). El resto del programa conserva su comportamiento. Para compilar sin red,
-esta fase incluye un `list.hpp` de respaldo. Para usar explícitamente DeSiGNAR, configure con
-`-DNIX_DESIGNAR_DIR=/ruta/a/DeSiGNAR`; CMake prioriza entonces la cabecera de la biblioteca sobre el respaldo local.
+la interfaz de siempre (`push_back`, `insertarOrdenado`, `erase`, `comoVector`…) pero guarda sus elementos en una
+`Designar::DLList<T>` (`#include <list.hpp>`). El resto del programa no cambió, así que su comportamiento es el mismo.
+`CMakeLists.txt` descarga DeSiGNAR de GitHub al configurar (necesita internet la primera vez).
 
 ## Requisitos
 - **g++ ≥ 9** o Clang ≥ 14 (C++17), **CMake ≥ 3.20** y **git** (para descargar DeSiGNAR).
+- **libcurl** con cabeceras (`sudo apt install libcurl4-openssl-dev` en Debian/Ubuntu).
 - **Docker** con Compose v2 (solo si prefiere no instalar nada más).
 
 ## Compilar y probar con CMake
@@ -35,11 +36,11 @@ cmake --build build -j
 ctest --test-dir build --output-on-failure      # ejecuta todas las pruebas
 ./build/nix                                     # arranca en http://localhost:8080
 ```
-`bash probar.sh` hace los tres primeros pasos. Si tiene DeSiGNAR en su equipo, indíquelo con
+`bash probar.sh` hace los tres primeros pasos. Si ya tiene DeSiGNAR en su equipo (o no hay internet), indíquelo:
 `cmake -S . -B build -DNIX_DESIGNAR_DIR=/ruta/a/DeSiGNAR`. Ejecute `./build/nix` desde la carpeta del proyecto (así encuentra
 `./web`) o defina `JARVIS_WEB` y `JARVIS_DATA`.
 
-Pruebas incluidas (`src/pruebas/`): `tests_fase1`, `tests_fase2`, `tests`, `tests_closet`, `tests_api`.
+Pruebas incluidas (`src/pruebas/`): `tests_fase1`, `tests_fase2`, `tests`, `tests_closet`, `tests_servidor`, `tests_api`.
 
 ## Compilar y ejecutar con Docker
 ```
@@ -63,17 +64,15 @@ Comandos útiles: `docker compose logs -f nix` · `docker compose down` · `dock
 | `JARVIS_WEB` | Carpeta de la interfaz | `./web` |
 | `JARVIS_DATA` | Carpeta de datos (`tareas.txt`, `notas.txt`, `closet.txt`) | `./datos` |
 | `JARVIS_TRATO` | Cómo le llama Nix | `señor` |
+| `JARVIS_CIUDAD` | Ciudad para el clima | vacía |
+| `TZ` | Zona horaria | `UTC` |
 
 ## Uso
-Escriba o diga órdenes en el chat; el panel lateral muestra **Pendientes**, **Notas** y **Closet**.
+Además de tareas, notas y closet, Nix responde **sin IA** a cálculo, conversiones, fechas, hora mundial, temporizadores,
+clima y Wikipedia:
 ```
-agendar reunión con el cliente mañana a las 4        anota que el parcial es el viernes
-guarda mi camisa azul, es formal                     (si no dice el estilo, Nix pregunta «¿formal o informal?»)
-mi closet · qué tengo de ropa informal · mis camisas
-quita mi camisa azul del closet · bórrala · deshaz
-vacía mi closet                                      (pide confirmación y se puede deshacer)
-qué me pongo para una entrevista                     (arma el outfit con sus prendas y muestra la tarjeta)
+calcula 12 más 30 · cuánto es la raíz cuadrada de 144       pon un temporizador de 10 minutos
+vivo en Mérida · qué clima hace hoy                         guarda mi camisa azul, es formal
 ```
-**API** (JSON; los POST exigen la cabecera `X-Jarvis: 1`): `GET /salud`, `/api/tareas`, `/api/notas`, `/api/closet`;
-`POST /api/mensaje`, `/api/tarea/completar`, `/api/tarea/eliminar`, `/api/nota/eliminar`, `/api/closet/agregar`,
-`/api/closet/eliminar`, `/api/outfit`.
+El chip de clima de la interfaz usa `GET /api/clima` (caché de 10 minutos; sin ciudad o sin red no se inventa el clima).
+Se suma a la API del hito 3. Defina la ciudad con `JARVIS_CIUDAD` o diciendo «vivo en…».

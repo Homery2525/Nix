@@ -8,6 +8,7 @@ services:
     environment:
       TZ: ${TZ:-UTC}                             # zona horaria del núcleo
       JARVIS_TRATO: ${JARVIS_TRATO:-señor}
+      JARVIS_CIUDAD: ${JARVIS_CIUDAD:-}                  # ciudad para el clima (también: «vivo en Mérida»)
     volumes:
       - nix_datos:/data                          # tareas, notas y closet: sobreviven a reinicios y actualizaciones
 

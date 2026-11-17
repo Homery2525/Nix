@@ -22,7 +22,7 @@ public:
 
     ListaEnlazada() = default;
     ListaEnlazada(const ListaEnlazada& otra) : lista_(otra.lista_) {}
-    ListaEnlazada(ListaEnlazada&& otra) noexcept : lista_(std::move(otra.lista_)) {}
+    ListaEnlazada(ListaEnlazada&& otra) noexcept { lista_.swap(otra.lista_); }
 
     ListaEnlazada& operator=(const ListaEnlazada& otra) {
         if (this != &otra) {

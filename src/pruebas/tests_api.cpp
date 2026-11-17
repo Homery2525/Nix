@@ -1,4 +1,4 @@
-// API del servidor mínimo: seguridad de borde, tareas, notas, closet, outfit y archivos estáticos.
+// API del servidor (hito 4): seguridad de borde, tareas, notas, closet, outfit, habilidades sin IA, clima y estáticos.
 // Incluye una prueba de extremo a extremo con sockets reales (sin libcurl).
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -13,6 +13,7 @@
 #include <string>
 #include <thread>
 
+#include "Habilidades.hpp"
 #include "Servidor.hpp"
 
 namespace fs = std::filesystem;
@@ -176,6 +177,54 @@ int main() {
         CHECK(json(s.manejar(get("/api/closet"))).at("prendas").size() == 0);
     }
 
+    {  // ── Habilidades sin IA y clima, con la red simulada ──
+        auto redConFrio = [](double maxima) {
+            return [maxima](const std::string&, const std::string& url, const std::string&, const std::vector<std::string>&, int) -> RespuestaHttp {
+                if (tiene(url, "geocoding-api")) return {200, R"({"results":[{"name":"Mérida","timezone":"America/Caracas"}]})"};
+                if (tiene(url, "api.open-meteo.com"))
+                    return {200, R"({"current":{"temperature_2m":19.4,"apparent_temperature":18.2,"weather_code":2,"wind_speed_10m":7.6},)"
+                                 R"("daily":{"weather_code":[2,61,3],"temperature_2m_max":[)" + std::to_string(maxima) + R"(,21,22],)"
+                                 R"("temperature_2m_min":[14.2,13,14],"precipitation_probability_max":[40,80,10]}})"};
+                throw ErrorRed("URL inesperada: " + url);
+            };
+        };
+        const fs::path d2 = carpeta("habilidades");
+        ConfigServidor c2 = cfg;
+        c2.datos = d2.string(); c2.ciudadInicial = "Mérida";
+        Servidor s(c2, redConFrio(23.1));
+        Json clima = json(s.manejar(get("/api/clima")));
+        CHECK(clima.at("disponible").booleano() && clima.at("ciudad").texto() == "Mérida");
+        CHECK(clima.at("probabilidadLluvia").entero() == 40 && clima.at("paraguas").booleano() && !clima.at("abrigo").booleano());
+
+        Servidor frio(c2, redConFrio(15.0));
+        CHECK(json(frio.manejar(get("/api/clima"))).at("abrigo").booleano());
+
+        ConfigServidor sinCiudad = c2;
+        sinCiudad.ciudadInicial = "";
+        Servidor sc(sinCiudad, redConFrio(23.1));
+        CHECK(!json(sc.manejar(get("/api/clima"))).at("disponible").booleano());      // sin ciudad no se inventa el clima
+
+        Servidor roto(c2, [](const std::string&, const std::string&, const std::string&, const std::vector<std::string>&, int) -> RespuestaHttp {
+            throw ErrorRed("sin red");
+        });
+        CHECK(roto.manejar(get("/api/clima")).estado == 200 && !json(roto.manejar(get("/api/clima"))).at("disponible").booleano());
+
+        Json r = decir(s, "calcula 12 más 30");
+        CHECK(r.at("origen").texto() == "habilidad" && tiene(r.at("respuesta").texto(), "42"));
+        r = decir(s, "pon un temporizador de 10 minutos");
+        CHECK(r.at("accion").at("tipo").texto() == "temporizador" && r.at("accion").at("segundos").entero() == 600);
+
+        // El closet sigue siendo del núcleo: una orden de prendas no la intercepta ninguna habilidad…
+        r = decir(s, "guarda mi chaqueta gris formal");
+        CHECK(r.at("origen").texto() == "local" && tiene(r.at("respuesta").texto(), "Guardada"));
+        // …ni la respuesta corta a una pregunta de Nix («formal» / «informal»).
+        CHECK(tiene(decir(s, "agrega un pantalón negro").at("respuesta").texto(), "formal o informal"));
+        r = decir(s, "informal");
+        CHECK(r.at("origen").texto() == "local" && tiene(r.at("respuesta").texto(), "Guardada"));
+        CHECK(json(s.manejar(get("/api/closet"))).at("prendas").size() == 2);
+        fs::remove_all(d2);
+    }
+
     {  // ── Extremo a extremo con sockets reales ──
         Servidor s(cfg);
         ServidorHttp http(0, [&s](const PeticionHttp& p) { return s.manejar(p); });
@@ -201,9 +250,9 @@ int main() {
     fs::remove_all(web);
     fs::remove(web.parent_path() / "secreto.txt");
     if (fallos) {
-        std::printf("\nAPI del hito 3: %d prueba(s) fallaron\n", fallos);
+        std::printf("\nAPI del hito 4: %d prueba(s) fallaron\n", fallos);
         return 1;
     }
-    std::printf("\nAPI del hito 3: todas las pruebas pasaron\n");
+    std::printf("\nAPI del hito 4: todas las pruebas pasaron\n");
     return 0;
 }

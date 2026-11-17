@@ -1,6 +1,6 @@
 # ───────── Etapa 1: compilar y probar (todo el proyecto es C++17) ─────────
 FROM debian:bookworm-slim AS compilar
-RUN apt-get update && apt-get install -y --no-install-recommends g++ make cmake git ca-certificates tzdata \
+RUN apt-get update && apt-get install -y --no-install-recommends g++ make cmake git ca-certificates tzdata libcurl4-openssl-dev \
  && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 COPY CMakeLists.txt ./
@@ -15,7 +15,7 @@ RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
 
 # ───────── Etapa 2: imagen final (un solo programa + la interfaz web) ─────────
 FROM debian:bookworm-slim
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates tzdata && rm -rf /var/lib/apt/lists/* \
+RUN apt-get update && apt-get install -y --no-install-recommends libcurl4 ca-certificates tzdata && rm -rf /var/lib/apt/lists/* \
  && useradd --create-home --uid 1000 nix && mkdir /data && chown nix /data
 COPY --from=compilar /src/build/nix /usr/local/bin/nix
 COPY web/ /app/web/
@@ -23,5 +23,5 @@ ENV JARVIS_DATA=/data JARVIS_WEB=/app/web PORT=8080
 USER nix
 VOLUME /data
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=5s CMD bash -c 'exec 3<>/dev/tcp/127.0.0.1/${PORT} && printf "GET /salud HTTP/1.0\r\nHost: localhost\r\n\r\n" >&3 && grep -q ok <&3'
+HEALTHCHECK --interval=30s --timeout=5s CMD ["nix", "--salud"]
 CMD ["nix"]

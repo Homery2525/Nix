@@ -49,10 +49,31 @@ std::string tipoDe(const fs::path& p) {
 
 }  // namespace
 
-Servidor::Servidor(ConfigServidor cfg) : cfg_(std::move(cfg)) {
+Servidor::Servidor(ConfigServidor cfg, FuncionHttp http)
+    : cfg_(std::move(cfg)), http_(std::move(http)), inicio_(std::time(nullptr)) {
     fs::create_directories(cfg_.datos);
+    tz_ = habilidades::tzValida(cfg_.zonaInicial) ? cfg_.zonaInicial : "UTC";
+    habilidades::fijarZona(tz_);
+    ciudad_ = cfg_.ciudadInicial;
     asistente_ = std::make_unique<Asistente>(cfg_.datos, cfg_.tratoInicial.empty() ? "señor" : cfg_.tratoInicial);
     if (cfg_.reloj) asistente_->usarReloj(cfg_.reloj);
+    ctxHab_.memoria = &memHab_;
+    ctxHab_.http = http_;
+    ctxHab_.reloj = cfg_.reloj;
+}
+
+habilidades::Contexto& Servidor::contextoHabilidades() {
+    ctxHab_.trato = cfg_.tratoInicial.empty() ? "señor" : cfg_.tratoInicial;
+    ctxHab_.tz = tz_;
+    ctxHab_.ciudad = ciudad_;
+    ctxHab_.estado = [this] {
+        habilidades::EstadoSistema e;
+        for (const Tarea& t : asistente_->tareas()) e.tareas += t.completada() ? 0 : 1;
+        e.notas = static_cast<int>(asistente_->notas().size());
+        e.minutos = static_cast<int>((std::time(nullptr) - inicio_) / 60);
+        return e;
+    };
+    return ctxHab_;
 }
 
 // ───────────────────────── Datos de la API ─────────────────────────
@@ -85,6 +106,21 @@ Json Servidor::notasJson() const {
     return j;
 }
 
+Json Servidor::climaJson() {
+    const std::time_t t = std::time(nullptr);
+    if (!climaCache_.esNulo() && climaCiudad_ == ciudad_ && t - climaHora_ < 600) return climaCache_;
+    const habilidades::ConsejoClima c = habilidades::consejoClimaLocal(contextoHabilidades());
+    Json j = Json::objeto();
+    j["disponible"] = c.disponible;
+    j["ciudad"] = c.ciudad;
+    j["probabilidadLluvia"] = c.probabilidadLluvia;
+    j["temperaturaMaxima"] = c.temperaturaMaxima;
+    j["paraguas"] = c.paraguas;
+    j["abrigo"] = c.abrigo;
+    if (c.disponible) { climaCache_ = j; climaHora_ = t; climaCiudad_ = ciudad_; }  // un fallo no se guarda: se reintenta
+    return j;
+}
+
 // ───────────────────────── Mensajes ─────────────────────────
 
 Json Servidor::responder(const std::string& entrada) {
@@ -93,6 +129,17 @@ Json Servidor::responder(const std::string& entrada) {
     out["origen"] = "local";
     if (texto.empty()) { out["respuesta"] = ""; return out; }
     std::lock_guard<std::mutex> g(m_);
+    if (!asistente_->esperandoRespuesta()) {  // una respuesta a una pregunta de Nix no se reinterpreta como habilidad
+        const bool entiende = asistente_->entiende(texto);
+        if (auto h = habilidades::manejar(texto, contextoHabilidades(), entiende)) {  // cálculo, clima, Wikipedia… sin IA
+            if (!h->ajusteCiudad.empty()) { ciudad_ = h->ajusteCiudad; climaHora_ = 0; }
+            out["respuesta"] = h->respuesta;
+            out["origen"] = "habilidad";
+            out["habilidad"] = h->habilidad;
+            if (!h->accion.esNulo()) out["accion"] = h->accion;
+            return out;
+        }
+    }
     out["respuesta"] = asistente_->procesar(texto);
     if (const auto& outfit = asistente_->ultimoOutfit()) out["outfit"] = outfitJson(*outfit);  // la interfaz lo dibuja como tarjeta
     return out;
@@ -127,6 +174,7 @@ RespuestaServidor Servidor::get(const PeticionHttp& p) {
     if (p.ruta == "/api/tareas") return respuestaJson(tareasJson());
     if (p.ruta == "/api/notas") return respuestaJson(notasJson());
     if (p.ruta == "/api/closet") return respuestaJson(closetJson(asistente_->prendas()));
+    if (p.ruta == "/api/clima") return respuestaJson(climaJson());
     if (p.ruta.rfind("/api/", 0) == 0) return error(404, "no existe");
     return estatico(p.ruta);
 }
