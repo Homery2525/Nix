@@ -1,4 +1,4 @@
-// Modelos.hpp - Clases del dominio: Tarea y Nota.
+                                                  
 #pragma once
 #include <ctime>
 #include <optional>
@@ -7,9 +7,9 @@
 inline std::tm tmLocal(std::time_t t) {
     std::tm r{};
 #ifdef _WIN32
-    localtime_s(&r, &t);  // MSVC / MinGW
+    localtime_s(&r, &t);                 
 #else
-    localtime_r(&t, &r);  // POSIX
+    localtime_r(&t, &r);          
 #endif
     return r;
 }
@@ -27,7 +27,7 @@ public:
 
     int id() const { return id_; }
     const std::string& titulo() const { return titulo_; }
-    std::time_t cuando() const { return cuando_; }  // 0 = sin fecha
+    std::time_t cuando() const { return cuando_; }                  
     bool tieneHora() const { return tieneHora_; }
     Prioridad prioridad() const { return prioridad_; }
     const std::string& estiloEvento() const { return estiloEvento_; }
@@ -38,10 +38,10 @@ public:
     void reabrir() { completada_ = false; }
     void reprogramar(std::time_t cuando, bool tieneHora) { cuando_ = cuando; tieneHora_ = tieneHora; }
 
-    // Orden de urgencia: pendientes primero, luego prioridad alta, luego fecha más cercana.
+                                                                                            
     bool operator<(const Tarea& otra) const;
 
-    std::string serializar() const;  // id|titulo|cuando|tieneHora|prioridad|completada|estiloEvento
+    std::string serializar() const;                                                                 
     static std::optional<Tarea> deserializar(const std::string& linea);
 
 private:
@@ -65,7 +65,7 @@ public:
     const std::string& categoria() const { return categoria_; }
     void setId(int id) { id_ = id; }
 
-    std::string serializar() const;  // id|titulo|categoria|contenido
+    std::string serializar() const;                                  
     static std::optional<Nota> deserializar(const std::string& linea);
 
 private:
@@ -73,8 +73,8 @@ private:
     std::string titulo_, contenido_, categoria_;
 };
 
-// Prenda del closet. categoria: superior | inferior | calzado | abrigo. estilo: formal | informal
-// (mismo vocabulario que Tarea::estiloEvento, para comparar prendas y eventos directamente).
+                                                                                                  
+                                                                                             
 class Prenda {
 public:
     Prenda() = default;
@@ -90,7 +90,7 @@ public:
     static bool categoriaValida(const std::string& c);
     static bool estiloValido(const std::string& e);
 
-    std::string serializar() const;  // id|nombre|categoria|color|estilo
+    std::string serializar() const;                                     
     static std::optional<Prenda> deserializar(const std::string& linea);
 
 private:

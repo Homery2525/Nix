@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/_deps/designar-subbuild/CMakeFiles/designar-populate"
+		},
+		{
+			"file" : "/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/_deps/designar-subbuild/CMakeFiles/designar-populate.rule"
+		},
+		{
+			"file" : "/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/_deps/designar-subbuild/CMakeFiles/designar-populate-complete.rule"
+		},
+		{
+			"file" : "/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/_deps/designar-subbuild/designar-populate-prefix/src/designar-populate-stamp/designar-populate-build.rule"
+		},
+		{
+			"file" : "/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/_deps/designar-subbuild/designar-populate-prefix/src/designar-populate-stamp/designar-populate-configure.rule"
+		},
+		{
+			"file" : "/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/_deps/designar-subbuild/designar-populate-prefix/src/designar-populate-stamp/designar-populate-download.rule"
+		},
+		{
+			"file" : "/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/_deps/designar-subbuild/designar-populate-prefix/src/designar-populate-stamp/designar-populate-install.rule"
+		},
+		{
+			"file" : "/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/_deps/designar-subbuild/designar-populate-prefix/src/designar-populate-stamp/designar-populate-mkdir.rule"
+		},
+		{
+			"file" : "/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/_deps/designar-subbuild/designar-populate-prefix/src/designar-populate-stamp/designar-populate-patch.rule"
+		},
+		{
+			"file" : "/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/_deps/designar-subbuild/designar-populate-prefix/src/designar-populate-stamp/designar-populate-test.rule"
+		},
+		{
+			"file" : "/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/_deps/designar-subbuild/designar-populate-prefix/src/designar-populate-stamp/designar-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"designar-populate"
+		],
+		"name" : "designar-populate"
+	}
+}

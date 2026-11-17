@@ -1,4 +1,4 @@
-// Nix (hito 4): servidor web con interfaz, tareas, notas, closet, habilidades sin IA y clima.
+                                                                                              
 #include <csignal>
 #include <cstdlib>
 #include <iostream>
@@ -15,12 +15,12 @@ std::string entorno(const char* clave, const std::string& def = "") {
     return v && *v ? v : def;
 }
 
-}  // namespace
+}              
 
 int main(int argc, char** argv) {
     const int puerto = std::atoi(entorno("PORT", "8080").c_str());
 
-    if (argc > 1 && std::string(argv[1]) == "--salud") {  // para el HEALTHCHECK de Docker
+    if (argc > 1 && std::string(argv[1]) == "--salud") {                                  
         try {
             return httpCurl("GET", "http://127.0.0.1:" + std::to_string(puerto) + "/salud", "", {}, 3).estado == 200 ? 0 : 1;
         } catch (...) {

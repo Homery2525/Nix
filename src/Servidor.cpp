@@ -27,7 +27,7 @@ std::string recortar(const std::string& s) {
     return a == std::string::npos ? "" : s.substr(a, b - a + 1);
 }
 
-std::string recortarUtf8(const std::string& s, size_t maxBytes) {  // sin partir un carácter a la mitad
+std::string recortarUtf8(const std::string& s, size_t maxBytes) {                                      
     if (s.size() <= maxBytes) return s;
     size_t n = maxBytes;
     while (n > 0 && (static_cast<unsigned char>(s[n]) & 0xC0) == 0x80) --n;
@@ -47,7 +47,7 @@ std::string tipoDe(const fs::path& p) {
     return it == tipos.end() ? "application/octet-stream" : it->second;
 }
 
-}  // namespace
+}              
 
 Servidor::Servidor(ConfigServidor cfg, FuncionHttp http)
     : cfg_(std::move(cfg)), http_(std::move(http)), inicio_(std::time(nullptr)) {
@@ -76,7 +76,7 @@ habilidades::Contexto& Servidor::contextoHabilidades() {
     return ctxHab_;
 }
 
-// ───────────────────────── Datos de la API ─────────────────────────
+                                                                      
 
 Json Servidor::tareasJson() const {
     Json lista = Json::lista();
@@ -117,11 +117,11 @@ Json Servidor::climaJson() {
     j["temperaturaMaxima"] = c.temperaturaMaxima;
     j["paraguas"] = c.paraguas;
     j["abrigo"] = c.abrigo;
-    if (c.disponible) { climaCache_ = j; climaHora_ = t; climaCiudad_ = ciudad_; }  // un fallo no se guarda: se reintenta
+    if (c.disponible) { climaCache_ = j; climaHora_ = t; climaCiudad_ = ciudad_; }                                        
     return j;
 }
 
-// ───────────────────────── Mensajes ─────────────────────────
+                                                               
 
 Json Servidor::responder(const std::string& entrada) {
     const std::string texto = recortarUtf8(recortar(entrada), 2000);
@@ -129,9 +129,9 @@ Json Servidor::responder(const std::string& entrada) {
     out["origen"] = "local";
     if (texto.empty()) { out["respuesta"] = ""; return out; }
     std::lock_guard<std::mutex> g(m_);
-    if (!asistente_->esperandoRespuesta()) {  // una respuesta a una pregunta de Nix no se reinterpreta como habilidad
+    if (!asistente_->esperandoRespuesta()) {                                                                          
         const bool entiende = asistente_->entiende(texto);
-        if (auto h = habilidades::manejar(texto, contextoHabilidades(), entiende)) {  // cálculo, clima, Wikipedia… sin IA
+        if (auto h = habilidades::manejar(texto, contextoHabilidades(), entiende)) {                                      
             if (!h->ajusteCiudad.empty()) { ciudad_ = h->ajusteCiudad; climaHora_ = 0; }
             out["respuesta"] = h->respuesta;
             out["origen"] = "habilidad";
@@ -141,11 +141,11 @@ Json Servidor::responder(const std::string& entrada) {
         }
     }
     out["respuesta"] = asistente_->procesar(texto);
-    if (const auto& outfit = asistente_->ultimoOutfit()) out["outfit"] = outfitJson(*outfit);  // la interfaz lo dibuja como tarjeta
+    if (const auto& outfit = asistente_->ultimoOutfit()) out["outfit"] = outfitJson(*outfit);                                       
     return out;
 }
 
-// ───────────────────────── HTTP ─────────────────────────
+                                                           
 
 bool Servidor::hostPermitido(const PeticionHttp& p) const {
     auto it = p.cabeceras.find("host");
@@ -153,7 +153,7 @@ bool Servidor::hostPermitido(const PeticionHttp& p) const {
     std::string nombre = host;
     if (!host.empty() && host[0] == '[') nombre = host.substr(0, host.find(']') + 1);
     else nombre = host.substr(0, host.find(':'));
-    if (nombre == "localhost" || nombre == "127.0.0.1" || nombre == "[::1]") return true;  // frena el «DNS rebinding»
+    if (nombre == "localhost" || nombre == "127.0.0.1" || nombre == "[::1]") return true;                             
     return std::find(cfg_.hostsPermitidos.begin(), cfg_.hostsPermitidos.end(), nombre) != cfg_.hostsPermitidos.end();
 }
 
@@ -162,7 +162,7 @@ RespuestaServidor Servidor::manejar(const PeticionHttp& p) {
     if (p.metodo == "GET") return get(p);
     if (p.metodo == "POST") {
         auto it = p.cabeceras.find("x-jarvis");
-        if (it == p.cabeceras.end() || it->second != "1") return error(403, "falta la cabecera X-Jarvis");  // una web ajena no puede añadirla
+        if (it == p.cabeceras.end() || it->second != "1") return error(403, "falta la cabecera X-Jarvis");                                    
         return post(p);
     }
     return error(404, "no existe");
@@ -193,7 +193,7 @@ RespuestaServidor Servidor::post(const PeticionHttp& p) {
         j["ok"] = ok;
         return respuestaJson(j);
     }
-    if (p.ruta == "/api/closet/agregar") {  // formulario de la interfaz
+    if (p.ruta == "/api/closet/agregar") {                              
         std::string motivo;
         auto prenda = asistente_->agregarPrenda(datos->at("nombre").texto(), datos->at("categoria").texto(),
                                                 datos->at("color").texto(), datos->at("estilo").texto(), motivo);
@@ -208,7 +208,7 @@ RespuestaServidor Servidor::post(const PeticionHttp& p) {
         j["ok"] = asistente_->eliminarPrenda(static_cast<int>(idDe(datos->at("id"))));
         return respuestaJson(j);
     }
-    if (p.ruta == "/api/outfit") {  // la tarjeta «Outfit sugerido»: estilo formal|informal, color y abrigo opcionales
+    if (p.ruta == "/api/outfit") {                                                                                    
         const std::string estilo = datos->at("estilo").texto();
         if (!estilo.empty() && !Prenda::estiloValido(estilo)) return error(400, "El estilo debe ser formal o informal.");
         std::string color = datos->at("color").texto();
@@ -227,7 +227,7 @@ RespuestaServidor Servidor::estatico(const std::string& ruta) {
     const fs::path raiz = fs::weakly_canonical(cfg_.web, ec);
     const fs::path archivo = fs::weakly_canonical(raiz / rel, ec);
     const std::string r = raiz.string(), a = archivo.string();
-    if (ec || a.compare(0, r.size() + 1, r + "/") != 0 || !fs::is_regular_file(archivo, ec)) return error(404, "no existe");  // nada fuera de web/
+    if (ec || a.compare(0, r.size() + 1, r + "/") != 0 || !fs::is_regular_file(archivo, ec)) return error(404, "no existe");                       
     std::ifstream in(archivo, std::ios::binary);
     std::stringstream ss;
     ss << in.rdbuf();

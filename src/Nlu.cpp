@@ -16,7 +16,7 @@ namespace {
 using I = Intencion;
 struct Regla { I intencion; const char* clave; int peso; };
 
-// Intent matching por palabras clave con puntaje: gana la intención con más peso acumulado.
+                                                                                            
 const Regla REGLAS[] = {
     {I::CrearTarea, "agendar", 3}, {I::CrearTarea, "agendame", 3}, {I::CrearTarea, "agenda", 2},
     {I::CrearTarea, "recordar", 3}, {I::CrearTarea, "recuerdame", 3}, {I::CrearTarea, "recuerda", 2},
@@ -87,7 +87,7 @@ const Regla REGLAS[] = {
     {I::LimpiarAgendaHoy, "cancela mis actividades de hoy", 12}, {I::LimpiarAgendaHoy, "elimina todo lo que tengo hoy", 12},
 };
 
-// Palabras de "mando" que se quitan al inicio para quedarnos con el asunto.
+                                                                            
 const std::set<std::string> LIDER = {
     "jarvis", "nix", "por", "favor", "puedes", "podrias", "quiero", "quisiera", "que", "me", "mi", "mis", "una", "un",
     "nueva", "nuevo", "nota", "tarea", "recordatorio", "pendiente", "recordar", "recuerdame", "recuerda",
@@ -111,15 +111,15 @@ int numero(const std::string& t) {
         {"siete", 7}, {"ocho", 8}, {"nueve", 9}, {"diez", 10}, {"once", 11}, {"doce", 12}};
     if (t.empty()) return -1;
     if (std::isdigit(static_cast<unsigned char>(t[0]))) {
-        if (t.size() > 6) return -1;  // stoi lanzaría out_of_range con números enormes («en 99999999999 dias»)
+        if (t.size() > 6) return -1;                                                                           
         return std::stoi(t);
     }
     auto it = m.find(t);
     return it == m.end() ? -1 : it->second;
 }
 
-// Busca `re` en w; si hay match guarda los grupos en g y BLANQUEA lo encontrado (w conserva su longitud,
-// así el mapa hacia el texto original sigue siendo válido).
+                                                                                                         
+                                                            
 bool extraer(std::string& w, const std::regex& re, std::vector<std::string>& g) {
     std::smatch m;
     if (!std::regex_search(w, m, re)) return false;
@@ -156,18 +156,18 @@ void extraerFechaHora(std::string& w, std::time_t ahora, Entidades& e) {
 
     std::vector<std::string> g;
 
-    // Prioridad
+                
     if (extraer(w, reBaja, g)) e.prioridad = Prioridad::Baja;
     else if (extraer(w, reAlta, g)) e.prioridad = Prioridad::Alta;
 
-    // Parte del día ("de la tarde", "esta noche")
+                                                  
     Mer mer = Mer::Ninguno;
     bool fechaExplicita = false;
     int dias = 0;
     if (extraer(w, reMerManana, g)) { mer = Mer::AM; if (g[1] == "esta") fechaExplicita = true; }
     if (extraer(w, reMerTN, g)) { mer = Mer::PM; if (g[1] == "esta") fechaExplicita = true; }
 
-    // Hora
+           
     int h = -1, min = 0;
     bool relativo = false;
     int relMin = 0;
@@ -194,11 +194,11 @@ void extraerFechaHora(std::string& w, std::time_t ahora, Entidades& e) {
     if (h >= 0) {
         if (mer == Mer::AM) { if (h == 12) h = 0; }
         else if (mer == Mer::PM) { if (h < 12) h += 12; }
-        else if (h >= 1 && h <= 6) { h += 12; e.horaAmbigua = true; }  // "a las 4" -> 4 PM
-        else if (h >= 7 && h <= 11) { e.horaAmbigua = true; }          // "a las 10" -> 10 AM
+        else if (h >= 1 && h <= 6) { h += 12; e.horaAmbigua = true; }                      
+        else if (h >= 7 && h <= 11) { e.horaAmbigua = true; }                                
     }
 
-    // Fecha
+            
     std::tm t = tmLocal(ahora);
     int mesFecha = -1, diaFecha = 0;
     if (extraer(w, rePasado, g)) { dias = 2; fechaExplicita = true; }
@@ -212,7 +212,7 @@ void extraerFechaHora(std::string& w, std::time_t ahora, Entidades& e) {
         int objetivo = 0;
         for (int i = 0; i < 7; ++i) if (g[1] == DIAS[i]) objetivo = i;
         dias = (objetivo - t.tm_wday + 7) % 7;
-        if (dias == 0) dias = 7;  // "el lunes" dicho en lunes = el siguiente
+        if (dias == 0) dias = 7;                                             
         fechaExplicita = true;
     } else if (extraer(w, reEnDias, g)) { dias = numero(g[1]); fechaExplicita = true; }
     else if (extraer(w, reSemana, g)) { dias = 7; fechaExplicita = true; }
@@ -242,7 +242,7 @@ void extraerFechaHora(std::string& w, std::time_t ahora, Entidades& e) {
     e.fechaExplicita = fechaExplicita;
 }
 
-// Reconstruye el asunto con el texto ORIGINAL (tildes y mayúsculas) de lo que sobró en `w`.
+                                                                                            
 std::string construirAsunto(const texto::Normalizado& n, const std::string& w, const std::string& original,
                             bool quitarArticulos, const std::string& verboAprox = "", bool conservarMe = false) {
     struct Tok { std::string norm, orig; };
@@ -271,7 +271,7 @@ std::string construirAsunto(const texto::Normalizado& n, const std::string& w, c
     return r;
 }
 
-// Distancia de edición con tope: devuelve > tope en cuanto se sabe que no se alcanza.
+                                                                                      
 int distancia(const std::string& a, const std::string& b, int tope) {
     if (std::abs(static_cast<int>(a.size()) - static_cast<int>(b.size())) > tope) return tope + 1;
     std::vector<int> prev(b.size() + 1), cur(b.size() + 1);
@@ -289,18 +289,18 @@ int distancia(const std::string& a, const std::string& b, int tope) {
     return prev[b.size()];
 }
 
-// Las expresiones regulares de std::regex son lentas en entradas largas; una orden hablada nunca necesita más.
+                                                                                                               
 std::string limitar(const std::string& s, size_t maxBytes = 600) {
     if (s.size() <= maxBytes) return s;
     size_t n = maxBytes;
-    while (n > 0 && (static_cast<unsigned char>(s[n]) & 0xC0) == 0x80) --n;  // no partir un carácter UTF-8
+    while (n > 0 && (static_cast<unsigned char>(s[n]) & 0xC0) == 0x80) --n;                                
     return s.substr(0, n);
 }
 
 
-// ───────── Closet ─────────
-// Se evalúa antes que las reglas generales: «guarda mi camisa azul» no debe acabar como nota y «borra la camisa»
-// no debe buscar una tarea. Cada orden exige vocabulario de prendas, así que no pisa las órdenes de agenda.
+                             
+                                                                                                                 
+                                                                                                            
 bool analizarCloset(const texto::Normalizado& n, const std::string& frase, Resultado& r) {
     const std::vector<std::string> tk = texto::dividir(n.s);
     if (tk.empty()) return false;
@@ -352,7 +352,7 @@ bool analizarCloset(const texto::Normalizado& n, const std::string& frase, Resul
             "las", "al", "a", "en", "del", "closet", "armario", "ropero", "guardarropa", "guardarropas", "es", "son",
             "estilo", "color", "prenda", "prendas", "por", "favor", "nix", "jarvis", "oye", "hey", "quiero", "que", "y",
             "tambien", "ahora", "nueva", "nuevo", "para", "todo", "todos", "todas", "ropa"};
-        // posición de cada palabra dentro del texto normalizado, para recuperar el original (con tildes y mayúsculas)
+                                                                                                                      
         std::vector<std::pair<size_t, size_t>> pos;
         for (size_t i = 0; i < n.s.size();) {
             size_t j = n.s.find(' ', i);
@@ -363,7 +363,7 @@ bool analizarCloset(const texto::Normalizado& n, const std::string& frase, Resul
         std::vector<bool> conserva(tk.size(), false);
         for (size_t i = 0; i < tk.size(); ++i)
             conserva[i] = !estrictas.count(tk[i]) && closet::estiloDePalabra(tk[i]).empty() && tk[i] != "de" && tk[i] != "con";
-        for (size_t i = 1; i + 1 < tk.size(); ++i) {  // «de» y «con» solo valen entre dos palabras que se conservan
+        for (size_t i = 1; i + 1 < tk.size(); ++i) {                                                                
             if (tk[i] != "de" && tk[i] != "con") continue;
             if (tk[i] == "de" && tk[i + 1] == "color") continue;
             conserva[i] = conserva[i - 1] && conserva[i + 1];
@@ -383,7 +383,7 @@ bool analizarCloset(const texto::Normalizado& n, const std::string& frase, Resul
     };
 
     if (guardar && hayCategoria) {
-        for (size_t i = 0; i + 1 < tk.size(); ++i)  // «guarda que me gusta la camisa azul» es una nota, no una prenda
+        for (size_t i = 0; i + 1 < tk.size(); ++i)                                                                    
             if (closet::categoriaDePalabra(tk[i]).empty() && (tk[i] == "guarda" || tk[i] == "guardar") && tk[i + 1] == "que")
                 return false;
         extraer();
@@ -417,7 +417,7 @@ bool analizarCloset(const texto::Normalizado& n, const std::string& frase, Resul
     return false;
 }
 
-}  // namespace
+}              
 
 Entidades Nlu::fechaDe(const std::string& entrada, std::time_t ahora) const {
     const std::string frase = limitar(entrada);
@@ -440,10 +440,10 @@ Resultado Nlu::analizar(const std::string& entrada, std::time_t ahora) const {
     size_t mejor = 0;
     for (size_t i = 1; i < puntajes.size(); ++i) if (puntajes[i] > puntajes[mejor]) mejor = i;
 
-    // Rescate: si nada encajó, se tolera un error de escritura en el verbo con el que empieza la orden
-    // («agendaar», «complestala»). Solo se mira la primera palabra con contenido, para no confundir
-    // frases normales («mi informe completo»).
-    std::string verboAprox;  // el verbo mal escrito, para no dejarlo dentro del asunto
+                                                                                                       
+                                                                                                    
+                                               
+    std::string verboAprox;                                                            
     if (puntajes[mejor] < 2) {
         static const std::set<std::string> relleno = {"jarvis", "nix", "por", "favor", "puedes", "podrias", "oye", "hey", "quiero"};
         std::string primera;
@@ -466,7 +466,7 @@ Resultado Nlu::analizar(const std::string& entrada, std::time_t ahora) const {
     r.intencion = (r.puntaje >= 2) ? static_cast<Intencion>(mejor) : Intencion::Desconocida;
 
     switch (r.intencion) {
-        case Intencion::CrearNota:  // el contenido de una nota se deja intacto (no se interpretan fechas)
+        case Intencion::CrearNota:                                                                        
             r.entidades.asunto = construirAsunto(n, n.s, frase, false, "", true);
             break;
         case Intencion::CrearTarea:

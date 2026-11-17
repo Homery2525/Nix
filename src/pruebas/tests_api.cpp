@@ -1,5 +1,5 @@
-// API del servidor (hito 4): seguridad de borde, tareas, notas, closet, outfit, habilidades sin IA, clima y estáticos.
-// Incluye una prueba de extremo a extremo con sockets reales (sin libcurl).
+                                                                                                                       
+                                                                            
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -26,7 +26,7 @@ static int fallos = 0;
 
 static bool tiene(const std::string& s, const std::string& sub) { return s.find(sub) != std::string::npos; }
 
-// Domingo 11-oct-2026, 15:00 (hora local, con TZ=UTC)
+                                                      
 static std::time_t AHORA() {
     std::tm t{}; t.tm_year = 126; t.tm_mon = 9; t.tm_mday = 11; t.tm_hour = 15; t.tm_isdst = -1;
     return std::mktime(&t);
@@ -64,7 +64,7 @@ static Json decir(Servidor& s, const std::string& texto) {
     return json(s.manejar(post("/api/mensaje", cuerpo.dump())));
 }
 
-// Cliente HTTP mínimo con sockets, para la prueba de extremo a extremo.
+                                                                        
 static std::string http_crudo(int puerto, const std::string& peticion) {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     sockaddr_in a{};
@@ -94,9 +94,9 @@ int main() {
     {
         Servidor s(cfg);
 
-        // ── Borde: Host y cabecera X-Jarvis ──
+                                                
         CHECK(s.manejar(get("/salud")).estado == 200 && s.manejar(get("/salud")).cuerpo == "ok");
-        CHECK(s.manejar(get("/api/tareas", "evil.com")).estado == 403);   // «DNS rebinding»
+        CHECK(s.manejar(get("/api/tareas", "evil.com")).estado == 403);                     
         CHECK(s.manejar(get("/api/tareas", "127.0.0.1:8080")).estado == 200);
         CHECK(s.manejar(post("/api/mensaje", R"({"texto":"hola"})", false)).estado == 403);
         CHECK(s.manejar(post("/api/mensaje", "{roto")).estado == 400);
@@ -104,13 +104,13 @@ int main() {
         PeticionHttp put = get("/api/tareas"); put.metodo = "PUT";
         CHECK(s.manejar(put).estado == 404);
 
-        // ── Archivos estáticos ──
+                                   
         CHECK(tiene(s.manejar(get("/")).cuerpo, "<h1>Nix</h1>"));
-        CHECK(s.manejar(get("/../secreto.txt")).estado == 404);          // nada fuera de web/
+        CHECK(s.manejar(get("/../secreto.txt")).estado == 404);                               
         CHECK(s.manejar(get("/%2e%2e/secreto.txt")).estado == 404);
         CHECK(s.manejar(get("/no-existe.js")).estado == 404);
 
-        // ── Mensajes: tareas y notas ──
+                                         
         Json r = decir(s, "agendar reunión con el cliente mañana a las 4");
         CHECK(r.at("origen").texto() == "local" && tiene(r.at("respuesta").texto(), "eunión"));
         Json t = json(s.manejar(get("/api/tareas")));
@@ -118,13 +118,13 @@ int main() {
         decir(s, "anota que el parcial es el viernes");
         CHECK(json(s.manejar(get("/api/notas"))).at("notas").size() == 1);
         CHECK(decir(s, "   ").at("respuesta").texto().empty());
-        CHECK(decir(s, std::string(5000, 'a')).at("respuesta").texto().size() > 0);  // se recorta y no revienta
+        CHECK(decir(s, std::string(5000, 'a')).at("respuesta").texto().size() > 0);                             
 
         const int idTarea = static_cast<int>(t.at("tareas").at(0).at("id").entero());
         CHECK(json(s.manejar(post("/api/tarea/completar", "{\"id\":" + std::to_string(idTarea) + "}"))).at("ok").booleano());
         CHECK(!json(s.manejar(post("/api/tarea/completar", R"({"id":999})"))).at("ok").booleano());
 
-        // ── Closet: por conversación ──
+                                         
         CHECK(json(s.manejar(get("/api/closet"))).at("prendas").size() == 0);
         r = decir(s, "guarda mi camisa azul, es formal");
         CHECK(tiene(r.at("respuesta").texto(), "Guardada") && r.at("outfit").esNulo());
@@ -138,7 +138,7 @@ int main() {
               closet.at("prendas").at(0).at("categoria").texto() == "superior" &&
               closet.at("prendas").at(0).at("estilo").texto() == "formal");
 
-        // ── Closet: formulario ──
+                                   
         Json nueva = json(s.manejar(post("/api/closet/agregar",
                           R"({"nombre":"Chaqueta gris","categoria":"abrigo","color":"Gris","estilo":"formal"})")));
         CHECK(nueva.at("ok").booleano() && nueva.at("prenda").at("color").texto() == "gris" && nueva.at("prenda").at("id").entero() == 5);
@@ -147,7 +147,7 @@ int main() {
         CHECK(s.manejar(post("/api/closet/agregar", R"({"nombre":"","categoria":"superior","color":"azul","estilo":"formal"})")).estado == 400);
         CHECK(s.manejar(post("/api/closet/agregar", R"({"nombre":"Gorra","categoria":"superior","color":"azul","estilo":"raro"})")).estado == 400);
 
-        // ── Outfit: en el chat y por la API ──
+                                                
         r = decir(s, "qué me pongo para una entrevista");
         CHECK(tiene(r.at("respuesta").texto(), "camisa azul, pantalón gris y zapatos negros"));
         CHECK(r.at("outfit").at("completo").booleano() && r.at("outfit").at("superior").at("nombre").texto() == "camisa azul");
@@ -160,24 +160,24 @@ int main() {
         CHECK(!inf.at("completo").booleano() && inf.at("faltantes").size() == 2);
         CHECK(s.manejar(post("/api/outfit", R"({"estilo":"raro"})")).estado == 400);
 
-        // ── Quitar prendas ──
+                               
         CHECK(json(s.manejar(post("/api/closet/eliminar", R"({"id":5})"))).at("ok").booleano());
         CHECK(!json(s.manejar(post("/api/closet/eliminar", R"({"id":5})"))).at("ok").booleano());
         CHECK(tiene(decir(s, "quita la camiseta roja del closet").at("respuesta").texto(), "He retirado"));
         CHECK(json(s.manejar(get("/api/closet"))).at("prendas").size() == 3);
     }
 
-    {  // ── Todo persiste: un servidor nuevo con la misma carpeta ve el closet y las tareas ──
+    {                                                                                          
         Servidor s(cfg);
         CHECK(json(s.manejar(get("/api/closet"))).at("prendas").size() == 3);
         CHECK(json(s.manejar(get("/api/tareas"))).at("tareas").size() == 1);
-        // vaciar con confirmación, desde el chat
+                                                 
         CHECK(tiene(decir(s, "vacía mi closet").at("respuesta").texto(), "Confirma"));
         decir(s, "sí");
         CHECK(json(s.manejar(get("/api/closet"))).at("prendas").size() == 0);
     }
 
-    {  // ── Habilidades sin IA y clima, con la red simulada ──
+    {                                                          
         auto redConFrio = [](double maxima) {
             return [maxima](const std::string&, const std::string& url, const std::string&, const std::vector<std::string>&, int) -> RespuestaHttp {
                 if (tiene(url, "geocoding-api")) return {200, R"({"results":[{"name":"Mérida","timezone":"America/Caracas"}]})"};
@@ -202,7 +202,7 @@ int main() {
         ConfigServidor sinCiudad = c2;
         sinCiudad.ciudadInicial = "";
         Servidor sc(sinCiudad, redConFrio(23.1));
-        CHECK(!json(sc.manejar(get("/api/clima"))).at("disponible").booleano());      // sin ciudad no se inventa el clima
+        CHECK(!json(sc.manejar(get("/api/clima"))).at("disponible").booleano());                                          
 
         Servidor roto(c2, [](const std::string&, const std::string&, const std::string&, const std::vector<std::string>&, int) -> RespuestaHttp {
             throw ErrorRed("sin red");
@@ -214,10 +214,10 @@ int main() {
         r = decir(s, "pon un temporizador de 10 minutos");
         CHECK(r.at("accion").at("tipo").texto() == "temporizador" && r.at("accion").at("segundos").entero() == 600);
 
-        // El closet sigue siendo del núcleo: una orden de prendas no la intercepta ninguna habilidad…
+                                                                                                      
         r = decir(s, "guarda mi chaqueta gris formal");
         CHECK(r.at("origen").texto() == "local" && tiene(r.at("respuesta").texto(), "Guardada"));
-        // …ni la respuesta corta a una pregunta de Nix («formal» / «informal»).
+                                                                                
         CHECK(tiene(decir(s, "agrega un pantalón negro").at("respuesta").texto(), "formal o informal"));
         r = decir(s, "informal");
         CHECK(r.at("origen").texto() == "local" && tiene(r.at("respuesta").texto(), "Guardada"));
@@ -225,7 +225,7 @@ int main() {
         fs::remove_all(d2);
     }
 
-    {  // ── Extremo a extremo con sockets reales ──
+    {                                               
         Servidor s(cfg);
         ServidorHttp http(0, [&s](const PeticionHttp& p) { return s.manejar(p); });
         CHECK(http.iniciar());

@@ -1,4 +1,4 @@
-// Repositorio.hpp - Almacena tareas y notas con listas propias y persistencia en archivos.
+                                                                                           
 #pragma once
 #include <cstddef>
 #include <optional>
@@ -10,7 +10,7 @@
 
 class Repositorio {
 public:
-    // carpeta vacía = solo memoria (útil para pruebas).
+                                                        
     explicit Repositorio(std::string carpeta = "");
 
     void cargar();
@@ -21,15 +21,15 @@ public:
     bool eliminarTarea(int id);
     bool reabrirTarea(int id);
     bool reprogramarTarea(int id, std::time_t cuando, bool tieneHora);
-    Tarea restaurarTarea(Tarea t);  // conserva el id original (deshacer una eliminación)
+    Tarea restaurarTarea(Tarea t);                                                       
     std::optional<Tarea> obtenerTarea(int id) const;
-    std::vector<Tarea> tareas() const;      // todas, ordenadas por urgencia
-    std::vector<Tarea> pendientes() const;  // solo no completadas (copia: para recorrer sin copiar use listaTareas())
+    std::vector<Tarea> tareas() const;                                      
+    std::vector<Tarea> pendientes() const;                                                                            
     size_t contarPendientes() const;
-    // Recorrido de solo lectura sin copiar nada (las copias de pendientes() reservan memoria por cada tarea).
+                                                                                                              
     const ListaEnlazada<Tarea>& listaTareas() const { return tareas_; }
 
-    // Busca por número (posición en pendientes) o por palabras del título.
+                                                                           
     std::optional<int> buscarTarea(const std::string& consulta, bool soloPendientes) const;
 
     Nota agregarNota(Nota n);
@@ -42,30 +42,30 @@ public:
         return notasVista_;
     }
 
-    // ── Closet ──
+                   
     Prenda agregarPrenda(Prenda p);
-    Prenda restaurarPrenda(Prenda p);  // conserva el id original (deshacer)
+    Prenda restaurarPrenda(Prenda p);                                       
     bool eliminarPrenda(int id);
-    size_t vaciarCloset();             // devuelve cuántas prendas había
+    size_t vaciarCloset();                                              
     std::optional<Prenda> obtenerPrenda(int id) const;
     std::vector<Prenda> prendas() const { return prendas_.comoVector(); }
     const ListaEnlazada<Prenda>& listaPrendas() const { return prendas_; }
-    bool existePrenda(const Prenda& p) const;  // mismo nombre, categoría y estilo
-    // Busca por número (posición en el closet) o por palabras del nombre, la categoría o el color.
+    bool existePrenda(const Prenda& p) const;                                     
+                                                                                                   
     std::optional<int> buscarPrenda(const std::string& consulta) const;
 
 private:
-    template <typename F> bool modificar(int id, F&& f);  // extrae, modifica y reinserta para mantener el orden
+    template <typename F> bool modificar(int id, F&& f);                                                        
     void insertarTareaOrdenada(const Tarea& tarea);
-    // Solo se reescribe el archivo que cambió, y de forma atómica (temporal + renombrado).
+                                                                                           
     void persistirTareas() const;
     void persistirNotas() const;
     void persistirCloset() const;
 
     std::string carpeta_;
-    ListaEnlazada<Tarea> tareas_;  // lista de DeSiGNAR (vía ListaEnlazada), ordenada por urgencia
+    ListaEnlazada<Tarea> tareas_;                                                                 
     ListaEnlazada<Nota> notas_;
-    ListaEnlazada<Prenda> prendas_;  // closet: lista de DeSiGNAR, en orden de alta (id creciente)
+    ListaEnlazada<Prenda> prendas_;                                                               
     mutable std::vector<Nota> notasVista_;
     mutable bool notasVistaValida_ = false;
     int sigIdTarea_ = 1;

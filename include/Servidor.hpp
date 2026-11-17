@@ -1,5 +1,5 @@
-// Servidor.hpp (hito 4) - Interfaz web + API JSON del núcleo (tareas, notas, closet) + habilidades sin IA y clima.
-// El hito 5 le añade ajustes, cerebros externos y la recomendación de ropa con el closet.
+                                                                                                                   
+                                                                                          
 #pragma once
 #include <ctime>
 #include <functional>
@@ -15,16 +15,16 @@
 
 struct ConfigServidor {
     std::string web = "./web", datos = "./datos", tratoInicial = "señor", ciudadInicial, zonaInicial = "UTC";
-    std::vector<std::string> hostsPermitidos;  // además de localhost
-    std::function<std::time_t()> reloj;        // solo para pruebas
+    std::vector<std::string> hostsPermitidos;                        
+    std::function<std::time_t()> reloj;                            
 };
 
 class Servidor {
 public:
-    explicit Servidor(ConfigServidor cfg, FuncionHttp http = httpCurl);  // las pruebas inyectan una red simulada
+    explicit Servidor(ConfigServidor cfg, FuncionHttp http = httpCurl);                                          
 
-    RespuestaServidor manejar(const PeticionHttp& peticion);  // punto de entrada del servidor HTTP
-    Json responder(const std::string& texto);                 // un mensaje del usuario -> respuesta (público para pruebas)
+    RespuestaServidor manejar(const PeticionHttp& peticion);                                       
+    Json responder(const std::string& texto);                                                                              
 
 private:
     RespuestaServidor get(const PeticionHttp&);
@@ -40,11 +40,11 @@ private:
     FuncionHttp http_;
     std::time_t inicio_;
     std::string tz_, ciudad_;
-    habilidades::Memoria memHab_;   // temporizadores, último resultado…
+    habilidades::Memoria memHab_;                                       
     habilidades::Contexto ctxHab_;
-    Json climaCache_;               // el clima se consulta como mucho cada 10 minutos
+    Json climaCache_;                                                                 
     std::time_t climaHora_ = 0;
     std::string climaCiudad_;
-    mutable std::mutex m_;  // protege el núcleo
+    mutable std::mutex m_;                      
     std::unique_ptr<Asistente> asistente_;
 };

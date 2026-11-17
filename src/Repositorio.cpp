@@ -12,8 +12,8 @@
 
 namespace {
 
-// Escribe en un archivo temporal y lo renombra al final: si el programa se cae a mitad de escritura,
-// el archivo anterior queda intacto (antes se truncaba y se escribía directamente).
+                                                                                                     
+                                                                                    
 bool escribirAtomico(const std::string& ruta, const std::function<void(std::ostream&)>& escribir) {
     const std::string temporal = ruta + ".tmp";
     {
@@ -29,7 +29,7 @@ bool escribirAtomico(const std::string& ruta, const std::function<void(std::ostr
     return true;
 }
 
-}  // namespace
+}              
 
 Repositorio::Repositorio(std::string carpeta) : carpeta_(std::move(carpeta)) {
     if (!carpeta_.empty()) cargar();
@@ -46,8 +46,8 @@ void Repositorio::cargar() {
     notasVistaValida_ = false;
     std::string linea;
     {
-        // Antes: una inserción ordenada por línea (O(n²) al cargar). Ahora se lee todo, se ordena una vez
-        // (O(n log n)) y se encadena al final de la lista propia.
+                                                                                                          
+                                                                  
         std::vector<Tarea> leidas;
         std::ifstream f(carpeta_ + "/tareas.txt");
         while (std::getline(f, linea))
@@ -117,7 +117,7 @@ template <typename F>
 bool Repositorio::modificar(int id, F&& f) {
     for (auto it = tareas_.begin(); it != tareas_.end(); ++it) {
         if (it->id() == id) {
-            Tarea t = std::move(*it);  // se extrae, se modifica y se reinserta para conservar el orden
+            Tarea t = std::move(*it);                                                                  
             tareas_.erase(it);
             f(t);
             insertarTareaOrdenada(t);
@@ -178,7 +178,7 @@ std::optional<int> Repositorio::buscarTarea(const std::string& consulta, bool so
     if (q.empty()) return std::nullopt;
 
     if (q.size() <= 3 && std::all_of(q.begin(), q.end(), [](unsigned char c) { return std::isdigit(c); })) {
-        // "tarea 2" = la 2.ª de la lista que se muestra. Se cuenta sobre la lista, sin copiar las pendientes.
+                                                                                                              
         const size_t idx = static_cast<size_t>(std::stoi(q));
         size_t n = 0;
         if (idx >= 1)
@@ -194,7 +194,7 @@ std::optional<int> Repositorio::buscarTarea(const std::string& consulta, bool so
     if (palabras.empty()) return std::nullopt;
 
     int mejorId = -1, mejorPuntaje = 0;
-    for (const Tarea& t : tareas_) {  // ya vienen en orden de urgencia
+    for (const Tarea& t : tareas_) {                                   
         if (soloPendientes && t.completada()) continue;
         const std::string titulo = texto::normalizar(t.titulo());
         int puntaje = 0;
@@ -215,7 +215,7 @@ Nota Repositorio::agregarNota(Nota n) {
 
 bool Repositorio::eliminarNota(int id) {
     for (auto it = notas_.begin(); it != notas_.end(); ++it) {
-        if (it->id() == id) {  // los id son únicos: no hace falta seguir recorriendo
+        if (it->id() == id) {                                                        
             notas_.erase(it);
             notasVistaValida_ = false;
             persistirNotas();
@@ -274,7 +274,7 @@ std::optional<int> Repositorio::buscarPrenda(const std::string& consulta) const 
     const std::string q = texto::normalizar(consulta);
     if (q.empty()) return std::nullopt;
     if (q.size() <= 3 && std::all_of(q.begin(), q.end(), [](unsigned char c) { return std::isdigit(c); })) {
-        const size_t idx = static_cast<size_t>(std::stoi(q));  // «prenda 2» = la 2.ª de la lista que se muestra
+        const size_t idx = static_cast<size_t>(std::stoi(q));                                                   
         size_t n = 0;
         if (idx >= 1)
             for (const Prenda& p : prendas_)

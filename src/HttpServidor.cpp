@@ -15,7 +15,7 @@
 #include <mutex>
 #include <thread>
 
-// ───────────────────────── Servidor ─────────────────────────
+                                                               
 
 namespace {
 
@@ -63,7 +63,7 @@ void responder(int fd, const RespuestaServidor& r) {
     enviarTodo(fd, cab + "\r\n" + r.cuerpo);
 }
 
-}  // namespace
+}              
 
 ServidorHttp::~ServidorHttp() { detener(); if (fd_ >= 0) close(fd_); }
 
@@ -117,13 +117,13 @@ void ServidorHttp::ejecutar() {
             --conexiones_;
         }).detach();
     }
-    // Apagado ordenado: los hilos de conexión usan `this` y el manejador; se espera (máx. 10 s) a que terminen
-    // antes de que main() destruya el servidor (antes podían seguir ejecutándose sobre objetos ya destruidos).
+                                                                                                               
+                                                                                                               
     for (int i = 0; i < 200 && conexiones_ > 0; ++i) std::this_thread::sleep_for(std::chrono::milliseconds(50));
 }
 
 void ServidorHttp::atender(int cliente) {
-    timeval limite{15, 0};  // un cliente lento no puede retener el hilo
+    timeval limite{15, 0};                                              
     setsockopt(cliente, SOL_SOCKET, SO_RCVTIMEO, &limite, sizeof limite);
 
     std::string datos;

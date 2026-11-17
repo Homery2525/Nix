@@ -1,0 +1,3 @@
+/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/_deps/designar-subbuild/CMakeFiles/designar-populate.dir
+/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/_deps/designar-subbuild/CMakeFiles/edit_cache.dir
+/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/_deps/designar-subbuild/CMakeFiles/rebuild_cache.dir

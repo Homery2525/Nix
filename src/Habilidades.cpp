@@ -26,16 +26,16 @@ const char* MESES_NORM[] = {"enero", "febrero", "marzo", "abril", "mayo", "junio
                             "octubre", "noviembre", "diciembre"};
 const char* DIAS_NORM[] = {"lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"};
 
-// Órdenes que son del núcleo (tareas, notas…): las habilidades no deben interceptarlas.
+                                                                                        
 const std::set<std::string> VERBOS_ORDEN = {
     "agenda", "agendar", "agendame", "recuerdame", "recordar", "recuerda", "anota", "anotar", "apunta", "programa",
     "programar", "completa", "completar", "elimina", "eliminar", "borra", "borrar", "cambia", "cambiar", "mueve",
     "mover", "posponer", "reprograma", "deshaz", "crea", "crear"};
 const std::set<std::string> RELLENO = {"jarvis", "nix", "por", "favor", "oye", "hey", "puedes", "podrias", "quiero", "me", "dime", "ahora"};
 
-// ───────────────────────── Texto ─────────────────────────
+                                                            
 
-std::string quitarAcentos(const std::string& s) {  // minúsculas, sin tildes; × ÷ − pasan a * / -
+std::string quitarAcentos(const std::string& s) {                                                
     std::string out;
     for (size_t i = 0; i < s.size();) {
         unsigned char c = static_cast<unsigned char>(s[i]);
@@ -77,7 +77,7 @@ std::string colapsar(const std::string& s) {
     return out;
 }
 
-std::string normCalc(const std::string& s) {  // conserva los símbolos matemáticos
+std::string normCalc(const std::string& s) {                                      
     std::string t = quitarAcentos(s), out;
     for (char c : t) out += (std::isalnum(static_cast<unsigned char>(c)) || std::string("%+-*/^().,=").find(c) != std::string::npos) ? c : ' ';
     return colapsar(out);
@@ -110,7 +110,7 @@ std::string sinRelleno(const std::string& t) {
 
 bool empiezaPor(const std::string& s, const std::string& pre) { return s.compare(0, pre.size(), pre) == 0; }
 
-std::string titulo(const std::string& s) {  // «mérida» -> «Mérida», «nueva york» -> «Nueva York»
+std::string titulo(const std::string& s) {                                                       
     std::string out = s;
     bool inicio = true;
     for (char& c : out) {
@@ -121,8 +121,8 @@ std::string titulo(const std::string& s) {  // «mérida» -> «Mérida», «nue
     return out;
 }
 
-// Compilar un std::regex es caro y antes se hacía en CADA mensaje (hasta ~20 veces por cálculo).
-// Se guardan ya compiladas, por patrón, en una caché propia de cada hilo (sin bloqueos).
+                                                                                                 
+                                                                                         
 const std::regex& rx(const std::string& patron, bool icase = false) {
     thread_local std::unordered_map<std::string, std::regex> cache;
     const std::string clave = (icase ? "i:" : "s:") + patron;
@@ -140,7 +140,7 @@ bool busca(const std::string& s, const char* patron, std::smatch& m, bool icase 
     return std::regex_search(s, m, rx(patron, icase));
 }
 
-bool busca(std::string&&, const char*, std::smatch&, bool = false) = delete;  // el resultado apuntaría a un temporal
+bool busca(std::string&&, const char*, std::smatch&, bool = false) = delete;                                         
 
 bool coincide(const std::string& s, const char* patron) {
     std::smatch m;
@@ -177,9 +177,9 @@ Resultado res(const std::string& texto, const char* habilidad) {
     return r;
 }
 
-// ───────────────────────── Fechas (calendario civil, sin depender de la zona) ─────────────────────────
+                                                                                                         
 
-long diasDesdeCivil(int y, unsigned m, unsigned d) {  // algoritmo de Howard Hinnant
+long diasDesdeCivil(int y, unsigned m, unsigned d) {                                
     y -= m <= 2;
     const long era = (y >= 0 ? y : y - 399) / 400;
     const unsigned yoe = static_cast<unsigned>(y - era * 400);
@@ -201,11 +201,11 @@ void civilDesdeDias(long z, int& y, int& m, int& d) {
     y = static_cast<int>(yy + (m <= 2));
 }
 
-int diaSemanaDe(long dias) { return static_cast<int>((((dias % 7) + 7) + 3) % 7); }  // 0 = lunes (1970-01-01 fue jueves)
+int diaSemanaDe(long dias) { return static_cast<int>((((dias % 7) + 7) + 3) % 7); }                                      
 
 bool bisiesto(int a) { return a % 4 == 0 && (a % 100 != 0 || a % 400 == 0); }
 
-std::string fechaLarga(long dias) {  // «martes 10 de noviembre de 2026»
+std::string fechaLarga(long dias) {                                     
     int y, m, d;
     civilDesdeDias(dias, y, m, d);
     return std::string(DIAS[diaSemanaDe(dias)]) + " " + std::to_string(d) + " de " + MESES[m - 1] + " de " + std::to_string(y);
@@ -218,7 +218,7 @@ long hoyEn(Contexto& ctx) {
 
 std::mutex& mutexZona() { static std::mutex m; return m; }
 
-// ───────────────────────── Números dichos en palabras ─────────────────────────
+                                                                                 
 
 const std::unordered_map<std::string, int> UNI = {
     {"cero", 0}, {"un", 1}, {"uno", 1}, {"una", 1}, {"dos", 2}, {"tres", 3}, {"cuatro", 4}, {"cinco", 5}, {"seis", 6},
@@ -267,11 +267,11 @@ bool leerNumero(const std::vector<std::string>& t, size_t i, long long& valor, s
     return true;
 }
 
-std::string palabrasADigitos(const std::string& t) {  // «quince por ocho» -> «15 por 8»
+std::string palabrasADigitos(const std::string& t) {                                    
     auto tokens = palabras(t);
     std::vector<std::string> salida;
     for (size_t i = 0; i < tokens.size();) {
-        if (tokens[i] == "ciento" && i > 0 && tokens[i - 1] == "por") {  // «por ciento» no es 100
+        if (tokens[i] == "ciento" && i > 0 && tokens[i - 1] == "por") {                           
             salida.push_back(tokens[i]);
             ++i;
             continue;
@@ -284,11 +284,11 @@ std::string palabrasADigitos(const std::string& t) {  // «quince por ocho» -> 
     return unir(salida, " ");
 }
 
-// ───────────────────────── Calculadora ─────────────────────────
+                                                                  
 
 enum class ErrCalc { Ok, DivCero, Invalido };
 
-struct Evaluador {  // analizador descendente: + - * / ** y sqrt/cbrt, sin eval de ninguna clase
+struct Evaluador {                                                                              
     const std::string& s;
     size_t i = 0;
     ErrCalc err = ErrCalc::Ok;
@@ -771,7 +771,7 @@ std::optional<Resultado> calculadora(const std::string& texto, const std::string
     std::string cuerpo;
     if (std::regex_search(r, m, trigger)) {
         cuerpo = m[1];
-    } else {  // sin verbo, solo si TODA la frase es una operación («15 por 8»)
+    } else {                                                                   
         cuerpo = r;
         auto tokens = palabras(palabrasADigitos(cuerpo));
         static const std::regex simbolo(R"RX([\d.,+\-*/^()%x]+)RX");
@@ -791,7 +791,7 @@ std::optional<Resultado> calculadora(const std::string& texto, const std::string
     return res("El resultado es " + numeroHablado(valor) + ", " + ctx.trato + ".", "calculadora");
 }
 
-// ───────────────────────── Conversión de unidades ─────────────────────────
+                                                                             
 
 struct Unidad { std::string dim; double factor; std::string sing, plur; };
 std::unordered_map<std::string, Unidad> construirUnidades() {
@@ -861,7 +861,7 @@ std::optional<Resultado> conversor(const std::string& texto, const std::string&,
                    (std::fabs(r - 1) < 1e-9 ? d.sing : d.plur) + ", " + ctx.trato + ".", "conversor");
 }
 
-// ───────────────────────── Fechas ─────────────────────────
+                                                             
 
 struct Festivo { const char* clave; int mes, dia; const char* etiqueta; };
 const Festivo FESTIVOS[] = {{"navidad", 12, 25, "Navidad"}, {"nochebuena", 12, 24, "Nochebuena"}, {"ano nuevo", 1, 1, "Año nuevo"},
@@ -955,7 +955,7 @@ std::optional<Resultado> fechas(const std::string&, const std::string& t, Contex
     return std::nullopt;
 }
 
-// ───────────────────────── Hora en el mundo ─────────────────────────
+                                                                       
 
 const std::map<std::string, std::pair<std::string, std::string>> CIUDADES = {
     {"tokio", {"Tokio", "Asia/Tokyo"}}, {"madrid", {"Madrid", "Europe/Madrid"}}, {"barcelona", {"Barcelona", "Europe/Madrid"}},
@@ -1017,7 +1017,7 @@ std::optional<Resultado> horaMundial(const std::string&, const std::string& t, C
     return res("En " + nombre + (alla.hora % 12 == 1 ? " es la " : " son las ") + horaHablada(alla.hora, alla.minuto) + sufijo + ", " + ctx.trato + ".", "hora_mundial");
 }
 
-// ───────────────────────── Temporizador ─────────────────────────
+                                                                   
 
 std::optional<long> duracion(std::string p) {
     double seg = 0;
@@ -1060,7 +1060,7 @@ std::optional<Resultado> temporizador(const std::string&, const std::string& t, 
     return r;
 }
 
-// ───────────────────────── Azar y decisiones ─────────────────────────
+                                                                        
 
 int aleatorio(Contexto& ctx, int a, int b) { return std::uniform_int_distribution<int>(a, b)(ctx.rng); }
 
@@ -1101,7 +1101,7 @@ std::optional<Resultado> azar(const std::string&, const std::string& t, Contexto
     return std::nullopt;
 }
 
-// ───────────────────────── Charla ─────────────────────────
+                                                             
 
 const std::vector<std::string> CHISTES = {
     "¿Por qué los programadores confunden Halloween con Navidad? Porque 31 de octubre es igual a 25 de diciembre, en octal.",
@@ -1175,7 +1175,7 @@ std::optional<Resultado> charla(const std::string&, const std::string& t, Contex
     return std::nullopt;
 }
 
-// ───────────────────────── Internet: clima y Wikipedia ─────────────────────────
+                                                                                  
 
 Json obtenerJson(Contexto& ctx, const std::string& url) {
     RespuestaHttp r = ctx.http("GET", url, "", {"Accept: application/json"}, 8);
@@ -1271,13 +1271,13 @@ std::optional<Resultado> clima(const std::string& texto, const std::string& t, C
     return consultarClima(ciudad, dia, ctx);
 }
 
-// ───────────────────────── Wikipedia ─────────────────────────
+                                                                
 
 std::string limpiarExtracto(const std::string& s) {
     return colapsar(std::regex_replace(s, rx(R"RX(\s*\([^)]*\))RX"), ""));
 }
 
-bool iniciaOracion(const std::string& s, size_t i) {  // mayúscula, dígito o comillas: empieza otra oración
+bool iniciaOracion(const std::string& s, size_t i) {                                                       
     if (i >= s.size()) return false;
     unsigned char c = static_cast<unsigned char>(s[i]);
     if (std::isupper(c) || std::isdigit(c) || c == '"' || c == '\'') return true;
@@ -1323,9 +1323,9 @@ std::optional<Resultado> wikiContinuar(const std::string&, const std::string& t,
     return leerOraciones(ctx, w.titulo, std::vector<std::string>(w.oraciones), w.pos);
 }
 
-}  // namespace
+}              
 
-// ───────────────────────── API pública ─────────────────────────
+                                                                  
 
 std::string norm(const std::string& s) {
     std::string t = quitarAcentos(s);
@@ -1407,7 +1407,7 @@ std::optional<Resultado> manejar(const std::string& texto, Contexto& ctx, bool l
             return res("No logro completar esa consulta ahora mismo, " + ctx.trato + ". Revise la conexión a internet.", h.nombre);
         }
     }
-    if (!localEntiende) return wikipedia(texto, ctx);  // preguntas de conocimiento general
+    if (!localEntiende) return wikipedia(texto, ctx);                                      
     return std::nullopt;
 }
 
@@ -1437,4 +1437,4 @@ ConsejoClima consejoClimaLocal(Contexto& ctx, int dia) {
     return ConsejoClima{};
 }
 
-}  // namespace habilidades
+}                          

@@ -1,0 +1,975 @@
+/*
+  This file is part of Designar.
+
+  Author: Alejandro Mujica (aledrums@gmail.com)
+*/
+
+#pragma once
+
+#include <types.hpp>
+#include <iterator.hpp>
+
+#include <new>
+
+namespace Designar
+{
+
+    template <typename T>
+    class SLNode
+    {
+        T item;
+        SLNode* next;
+
+    public:
+        SLNode() : item(), next(nullptr)
+        {
+            // empty
+        }
+
+        SLNode(const T& i) : item(i), next(nullptr)
+        {
+            // empty
+        }
+
+        SLNode(T&& i) : item(std::forward<T>(i)), next(nullptr)
+        {
+            // empty
+        }
+
+        SLNode(const SLNode&) = delete;
+
+        SLNode& operator=(const SLNode&) = delete;
+
+        bool is_empty() const
+        {
+            return next == nullptr;
+        }
+
+        void reset()
+        {
+            next = nullptr;
+        }
+
+        T& get_item()
+        {
+            return item;
+        }
+
+        const T& get_item() const
+        {
+            return item;
+        }
+
+        SLNode*& get_next()
+        {
+            return next;
+        }
+
+        const SLNode*& get_next() const
+        {
+            return next;
+        }
+
+        void insert_next(SLNode* p)
+        {
+            assert(p != nullptr);
+            assert(p->is_empty());
+            p->next = next;
+            next = p;
+        }
+
+        SLNode* remove_next()
+        {
+            if (next == nullptr)
+            {
+                return nullptr;
+            }
+
+            SLNode* ret_val = next;
+            next = ret_val->next;
+            ret_val->reset();
+            return ret_val;
+        }
+    };
+
+    class DL
+    {
+        DL* next;
+        DL* prev;
+
+    public:
+        DL() : next(this), prev(this)
+        {
+            // empty
+        }
+
+        DL(const DL&) : DL()
+        {
+            // empty
+        }
+
+        DL(DL&& l) : DL()
+        {
+            swap(l);
+        }
+
+        DL& operator=(const DL&)
+        {
+            return *this;
+        }
+
+        DL& operator=(DL&& l)
+        {
+            swap(l);
+            return *this;
+        }
+
+        void reset()
+        {
+            next = prev = this;
+        }
+
+        bool is_empty() const
+        {
+            return next == prev && next == this;
+        }
+
+        bool is_unitarian_or_empty() const
+        {
+            return next == prev;
+        }
+
+        bool is_unitarian() const
+        {
+            return next == prev && next != this;
+        }
+
+        DL*& get_next()
+        {
+            return next;
+        }
+
+        const DL*& get_next() const
+        {
+            return (const DL*&)next;
+        }
+
+        DL*& get_prev()
+        {
+            return prev;
+        }
+
+        const DL*& get_prev() const
+        {
+            return (const DL*&)prev;
+        }
+
+        void insert_next(DL* node)
+        {
+            assert(node != nullptr);
+            assert(node->is_empty());
+            node->next = next;
+            node->prev = this;
+            next->prev = node;
+            next = node;
+        }
+
+        void insert_prev(DL* node)
+        {
+            assert(node != nullptr);
+            assert(node->is_empty());
+            node->next = this;
+            node->prev = prev;
+            prev->next = node;
+            prev = node;
+        }
+
+        void del()
+        {
+            next->prev = prev;
+            prev->next = next;
+            reset();
+        }
+
+        DL* remove_next()
+        {
+            DL* ret_val = next;
+            ret_val->del();
+            return ret_val;
+        }
+
+        DL* remove_prev()
+        {
+            DL* ret_val = prev;
+            ret_val->del();
+            return ret_val;
+        }
+
+        void swap(DL* node)
+        {
+            if (is_empty() && node->is_empty())
+            {
+                return;
+            }
+
+            if (is_empty())
+            {
+                next = node->next;
+                prev = node->prev;
+                node->next->prev = node->prev->next = this;
+                node->reset();
+                return;
+            }
+
+            if (node->is_empty())
+            {
+                node->next = next;
+                node->prev = prev;
+                next->prev = prev->next = node;
+                reset();
+                return;
+            }
+
+            std::swap(next->prev, node->next->prev);
+            std::swap(prev->next, node->prev->next);
+            std::swap(next, node->next);
+            std::swap(prev, node->prev);
+        }
+
+        void swap(DL& node)
+        {
+            swap(&node);
+        }
+
+        void concat(DL* l)
+        {
+            if (l->is_empty())
+            {
+                return;
+            }
+
+            if (this->is_empty())
+            {
+                this->next = l->next;
+                l->next->prev = this;
+                this->prev = l->prev;
+                l->prev->next = this;
+            }
+            else
+            {
+                this->prev->next = l->next;
+                l->next->prev = this->prev;
+                l->prev->next = this;
+                this->prev = l->prev;
+            }
+
+            l->reset();
+        }
+
+        void concat(DL& l)
+        {
+            concat(&l);
+        }
+
+        void split(DL&, DL&);
+
+        class Iterator
+        {
+            DL* head;
+            DL* curr;
+
+        protected:
+            DL* get_head() const
+            {
+                return head;
+            }
+
+            DL* get_location() const
+            {
+                return curr;
+            }
+
+        public:
+            Iterator() : head(nullptr), curr(nullptr)
+            {
+                // empty
+            }
+
+            Iterator(DL* h) : head(h), curr(h->get_next())
+            {
+                // empty
+            }
+
+            Iterator(DL* h, DL* c) : head(h), curr(c)
+            {
+                // empty
+            }
+
+            Iterator(const Iterator& it) : head(it.head), curr(it.curr)
+            {
+                // empty
+            }
+
+            Iterator(Iterator&& it) : Iterator()
+            {
+                swap(it);
+            }
+
+            Iterator& operator=(const Iterator& it)
+            {
+                if (this == &it)
+                {
+                    return *this;
+                }
+
+                head = it.head;
+                curr = it.curr;
+                return *this;
+            }
+
+            Iterator& operator=(Iterator&& it)
+            {
+                swap(it);
+                return *this;
+            }
+
+            void swap(Iterator& it)
+            {
+                std::swap(head, it.head);
+                std::swap(curr, it.curr);
+            }
+
+            bool has_current() const
+            {
+                return curr != head;
+            }
+
+            DL* get_current()
+            {
+                if (!has_current())
+                {
+                    throw std::overflow_error("There is not current element");
+                }
+
+                return curr;
+            }
+
+            DL* get_current() const
+            {
+                if (!has_current())
+                {
+                    throw std::overflow_error("There is not current element");
+                }
+
+                return curr;
+            }
+
+            void next()
+            {
+                if (!has_current())
+                {
+                    return;
+                }
+
+                curr = curr->get_next();
+            }
+
+            void prev()
+            {
+                if (curr == head->get_next())
+                {
+                    return;
+                }
+
+                curr = curr->get_prev();
+            }
+
+            void reset_first()
+            {
+                curr = head->get_next();
+            }
+
+            void reset_last()
+            {
+                curr = head->get_prev();
+            }
+
+            DL* del()
+            {
+                DL* ret_val = curr;
+                curr = curr->get_next();
+                ret_val->del();
+                return ret_val;
+            }
+        };
+    };
+
+    template <typename T>
+    class DLNode : public DL
+    {
+        T item;
+
+    public:
+        DLNode() : DL(), item()
+        {
+            // item
+        }
+
+        DLNode(const T& i) : DL(), item(i)
+        {
+            // empty
+        }
+
+        DLNode(T&& i) : DL(), item(std::forward<T>(i))
+        {
+            // empty
+        }
+
+        DLNode(const DLNode&) = delete;
+
+        /** Moves `item` too, not just the DL link pointers — the previous
+            version delegated to DLNode() (default-constructing `item`,
+            needlessly requiring T to be default-constructible) and only
+            ever swapped the DL part, silently leaving `n.item` untouched
+            and this node's `item` default-constructed instead of moved.
+            Currently dead code (DLList moves whole lists by swapping its
+            sentinel, never by moving individual DLNodes), but a real bug
+            waiting for any direct DLNode<T> user. */
+        DLNode(DLNode&& n) : DL(), item(std::move(n.item))
+        {
+            DL::swap(n);
+        }
+
+        DLNode& operator=(const DLNode&) = delete;
+
+        DLNode& operator=(DLNode&& n)
+        {
+            item = std::move(n.item);
+            DL::swap(n);
+            return *this;
+        }
+
+        T& get_item()
+        {
+            return item;
+        }
+
+        const T& get_item() const
+        {
+            return item;
+        }
+
+        DLNode*& get_next()
+        {
+            return (DLNode*&)DL::get_next();
+        }
+
+        const DLNode*& get_next() const
+        {
+            return (const DLNode*&)DL::get_next();
+        }
+
+        DLNode*& get_prev()
+        {
+            return (DLNode*&)DL::get_prev();
+        }
+
+        const DLNode*& get_prev() const
+        {
+            return (const DLNode*&)DL::get_prev();
+        }
+
+        DLNode* remove_next()
+        {
+            return static_cast<DLNode*>(DL::remove_next());
+        }
+
+        DLNode* remove_prev()
+        {
+            return static_cast<DLNode*>(DL::remove_prev());
+        }
+
+        class Iterator : public DL::Iterator
+        {
+            using Base = DL::Iterator;
+            using Base::Base;
+
+        public:
+            DLNode* get_current()
+            {
+                return static_cast<DLNode*>(Base::get_current());
+            }
+
+            DLNode* get_current() const
+            {
+                return static_cast<DLNode*>(Base::get_current());
+            }
+
+            DLNode* del()
+            {
+                return static_cast<DLNode*>(Base::del());
+            }
+
+            DLNode* operator*()
+            {
+                return get_current();
+            }
+
+            DLNode* operator*() const
+            {
+                return get_current();
+            }
+        };
+    };
+
+    enum class BinTreeNodeCtor
+    {
+        SENTINEL_CTOR
+    };
+
+    enum class BinTreeNodeNullValue
+    {
+        NULLPTR,
+        SENTINEL
+    };
+
+    template <typename Key, class DerivedNodeType,
+              BinTreeNodeNullValue NULL_VALUE>
+    class BaseBinTreeNode
+    {
+    public:
+        using KeyType = Key;
+
+        static DerivedNodeType* const null;
+
+    private:
+        /** Manual storage for `key`, rather than a plain `Key key;`
+            member: a bookkeeping-only node — built via the
+            BinTreeNodeCtor overload, used for the shared `sentinel_node`
+            below and for every tree's own `head`/`head_node` member —
+            never actually has its key read by any algorithm in this
+            library (confirmed directly: nothing calls get_key()/KEY() on
+            `null` or on any tree's `head`). Requiring `Key` to be
+            default-constructible purely to give such a node *some* key
+            value is therefore unnecessary — the same class of needless
+            requirement DynArray used to impose on its own element type.
+            `has_key` tracks whether `key_storage` currently holds a live
+            object, so the destructor knows whether `~Key()` needs to
+            run; `std::launder` is required to legally re-obtain a typed
+            pointer into storage that was placement-new'd after this
+            object's own lifetime began (see [basic.life] — without it, a
+            sufficiently aggressive optimizer is permitted to assume
+            `key_storage`'s bytes never changed since this BaseBinTreeNode
+            was constructed). */
+        alignas(Key) unsigned char key_storage[sizeof(Key)];
+        bool has_key;
+        DerivedNodeType* lchild;
+        DerivedNodeType* rchild;
+
+        Key& key_ref()
+        {
+            return *std::launder(reinterpret_cast<Key*>(key_storage));
+        }
+
+        const Key& key_ref() const
+        {
+            return *std::launder(reinterpret_cast<const Key*>(key_storage));
+        }
+
+        /** The sentinel `null` (in SENTINEL mode) refers to, behind a
+            function-local static rather than a class-level static data
+            member specifically so `if constexpr` can discard the whole
+            branch — including the sentinel's construction — for
+            NULLPTR-mode instantiations (only LHeap uses NULLPTR). A
+            class-level `static DerivedNodeType sentinel_node;` would
+            require *every* instantiation to define it regardless of
+            NULL_VALUE, since a plain (non-`if constexpr`) ternary's
+            untaken branch still has to be a well-formed expression. */
+        static DerivedNodeType* null_ptr()
+        {
+            if constexpr (NULL_VALUE == BinTreeNodeNullValue::NULLPTR)
+            {
+                return nullptr;
+            }
+            else
+            {
+                static DerivedNodeType sentinel_node(
+                    BinTreeNodeCtor::SENTINEL_CTOR);
+                return &sentinel_node;
+            }
+        }
+
+    public:
+        /** The bookkeeping-node constructor: leaves `key` genuinely
+            unconstructed. get_key()/KEY() must never be called on a node
+            built this way — nothing in this library ever does (a
+            sentinel/head node's key is never meaningful, only its
+            child/parent pointers are). */
+        BaseBinTreeNode() : has_key(false), lchild(null), rchild(null)
+        {
+            // empty
+        }
+
+        BaseBinTreeNode(const Key& k)
+            : has_key(true), lchild(null), rchild(null)
+        {
+            new (key_storage) Key(k);
+        }
+
+        BaseBinTreeNode(Key&& k) : has_key(true), lchild(null), rchild(null)
+        {
+            new (key_storage) Key(std::forward<Key>(k));
+        }
+
+        BaseBinTreeNode(BinTreeNodeCtor) : BaseBinTreeNode()
+        {
+            // empty
+        }
+
+        BaseBinTreeNode(const BaseBinTreeNode&) = delete;
+
+        BaseBinTreeNode& operator=(const BaseBinTreeNode&) = delete;
+
+        ~BaseBinTreeNode()
+        {
+            if (has_key)
+            {
+                key_ref().~Key();
+            }
+        }
+
+        Key& get_key()
+        {
+            return key_ref();
+        }
+
+        const Key& get_key() const
+        {
+            return key_ref();
+        }
+
+        DerivedNodeType*& get_lchild()
+        {
+            return lchild;
+        }
+
+        DerivedNodeType*& get_rchild()
+        {
+            return rchild;
+        }
+
+        void reset()
+        {
+            lchild = rchild = null;
+        }
+    };
+
+    template <typename Key, class DerivedNodeType,
+              BinTreeNodeNullValue NULL_VALUE>
+    DerivedNodeType* const
+        BaseBinTreeNode<Key, DerivedNodeType, NULL_VALUE>::null =
+            BaseBinTreeNode<Key, DerivedNodeType, NULL_VALUE>::null_ptr();
+
+    template <class BinTreeNode>
+    inline typename BinTreeNode::KeyType& KEY(BinTreeNode* p)
+    {
+        return p->get_key();
+    }
+
+    template <class BinTreeNode>
+    inline BinTreeNode*& L(BinTreeNode* p)
+    {
+        return p->get_lchild();
+    }
+
+    template <class BinTreeNode>
+    inline BinTreeNode*& R(BinTreeNode* p)
+    {
+        return p->get_rchild();
+    }
+
+    /** The subtree-size (a.k.a. rank/count) of an order-statistics node —
+        shared by every "Ranked" tree (RankedTree, RankedAVLTree,
+        RankedRBTree, RankedTreap, RandomizedTree), each of which stores a
+        `count` member and exposes it via `get_count()`. Requiring only
+        that member (not a common base class) is what lets this work
+        uniformly across trees whose node types otherwise share nothing
+        but `BaseBinTreeNode`. */
+    template <class RkNode>
+    inline nat_t& COUNT(RkNode* p)
+    {
+        return p->get_count();
+    }
+
+    /** Order-statistics select-by-rank: the `i`-th smallest key (0-based)
+        in the subtree rooted at `r`, found by walking left/right
+        comparing `i` against the left subtree's `COUNT` — identical
+        across every ranked tree regardless of *how* that tree stays
+        balanced, since balancing never changes the meaning of `COUNT`,
+        only when rotations happen. `i` must be `< COUNT(r)`; callers
+        range-check before calling this (see e.g. RankedTree::select). */
+    template <class RkNode>
+    RkNode* generic_select(RkNode* r, nat_t i)
+    {
+        nat_t left_count = COUNT(L(r));
+
+        if (left_count == i)
+        {
+            return r;
+        }
+
+        if (i < left_count)
+        {
+            return generic_select(L(r), i);
+        }
+
+        return generic_select(R(r), i - left_count - 1);
+    }
+
+    /** Order-statistics position-of-key: the in-order rank of `k` (0-based),
+        or -1 if `k` isn't present — the exact mirror image of
+        generic_select, and just as balancing-agnostic. */
+    template <class RkNode, typename K, class Cmp>
+    int_t generic_position(RkNode* r, const K& k, Cmp& cmp)
+    {
+        if (r == RkNode::null)
+        {
+            return -1;
+        }
+
+        if (cmp(k, KEY(r)))
+        {
+            return generic_position(L(r), k, cmp);
+        }
+        else if (cmp(KEY(r), k))
+        {
+            int_t p = generic_position(R(r), k, cmp);
+
+            if (p == -1)
+            {
+                return p;
+            }
+
+            return p + COUNT(L(r)) + 1;
+        }
+
+        return COUNT(L(r));
+    }
+
+    /** Plain BST descent, shared by every tree built on BaseBinTreeNode
+        (Tree, RankedTree, AVLTree, RbTree, RankedRBTree, SplayTree,
+        RandomizedTree, RankedAVLTree, Treap, RankedTreap) — search is the
+        one tree operation that never needs
+        any of what makes those trees differ from each other
+        (rebalancing, coloring, priorities, counts), so a single generic
+        version here serves all of them. Heterogeneous in the probe type
+        `K` (not necessarily `BinTreeNode::KeyType`) specifically so a
+        tree can be searched by a bare key that only *compares* like a
+        stored key, without needing to construct a full stored-key value
+        first — see GenMap::search()/find()/has()/remove() (map.hpp),
+        which used to construct a full MapKey<Key, Value> probe pair
+        purely to search, requiring `Value` to be default-constructible
+        for no algorithmic reason at all. */
+    template <class BinTreeNode, typename K, class Cmp>
+    BinTreeNode* generic_bst_search_by(BinTreeNode* r, const K& k, Cmp& cmp)
+    {
+        if (r == BinTreeNode::null)
+        {
+            return BinTreeNode::null;
+        }
+
+        if (cmp(k, KEY(r)))
+        {
+            return generic_bst_search_by<BinTreeNode>(L(r), k, cmp);
+        }
+        else if (cmp(KEY(r), k))
+        {
+            return generic_bst_search_by<BinTreeNode>(R(r), k, cmp);
+        }
+
+        return r;
+    }
+
+    /** The pointer-relinking half of a BST rotation, shared by every tree
+        built on BaseBinTreeNode — Tree, RankedTree, AVLTree, RbTree,
+        RankedRBTree, RandomizedTree, RankedAVLTree, Treap, RankedTreap,
+        and SplayTree all rotate their nodes identically; only what
+        *else* needs recomputing afterward (AVL height, RB color, a
+        subtree count, ...) differs per tree, so that stays the caller's
+        own responsibility rather than something this shared step tries
+        to guess at. A caller that has no such metadata (Tree, SplayTree,
+        Treap) can use this directly as its own rotate_left(); one that
+        does (AVLTree/RankedAVLTree's height, RbTree/RankedRBTree's
+        color, RandomizedTree/RankedTree/RankedTreap's count) wraps it,
+        calling this first and then updating its own metadata on both the
+        old and new subtree roots. */
+    template <class BinTreeNode>
+    BinTreeNode* generic_rotate_left(BinTreeNode* r)
+    {
+        BinTreeNode* q = R(r);
+        R(r) = L(q);
+        L(q) = r;
+        return q;
+    }
+
+    template <class BinTreeNode>
+    BinTreeNode* generic_rotate_right(BinTreeNode* r)
+    {
+        BinTreeNode* q = L(r);
+        L(r) = R(q);
+        R(q) = r;
+        return q;
+    }
+
+    template <typename NodeInfo, class CommonGraphNodeArc>
+    class BaseGraphNode : public CommonGraphNodeArc
+    {
+    protected:
+        NodeInfo info;
+        nat_t num_arcs;
+        DL adjacent_arc_list;
+
+        BaseGraphNode()
+            : CommonGraphNodeArc(), info(), num_arcs(0), adjacent_arc_list()
+        {
+            // empty
+        }
+
+        BaseGraphNode(const NodeInfo& _info)
+            : CommonGraphNodeArc(),
+              info(_info),
+              num_arcs(0),
+              adjacent_arc_list()
+        {
+            // empty
+        }
+
+        BaseGraphNode(NodeInfo&& _info)
+            : CommonGraphNodeArc(),
+              info(std::forward<NodeInfo>(_info)),
+              num_arcs(0),
+              adjacent_arc_list()
+        {
+            // empty
+        }
+
+        BaseGraphNode(BaseGraphNode* ptr)
+            : CommonGraphNodeArc(),
+              info(ptr->info),
+              num_arcs(0),
+              adjacent_arc_list()
+        {
+            // empty
+        }
+
+    public:
+        NodeInfo& get_info()
+        {
+            return info;
+        }
+
+        const NodeInfo& get_info() const
+        {
+            return info;
+        }
+
+        nat_t get_num_arcs() const
+        {
+            return num_arcs;
+        }
+    };
+
+    template <class GraphNode, typename ArcInfo, class CommonGraphNodeArc>
+    class BaseGraphArc : public CommonGraphNodeArc
+    {
+    protected:
+        GraphNode* src_node;
+        GraphNode* tgt_node;
+        ArcInfo info;
+
+        BaseGraphArc() : src_node(nullptr), tgt_node(nullptr), info()
+        {
+            // empty
+        }
+
+        BaseGraphArc(GraphNode* src, GraphNode* tgt)
+            : src_node(src), tgt_node(tgt), info()
+        {
+            // empty
+        }
+
+        BaseGraphArc(GraphNode* src, GraphNode* tgt, const ArcInfo& _info)
+            : src_node(src), tgt_node(tgt), info(_info)
+        {
+            // empty
+        }
+
+        BaseGraphArc(GraphNode* src, GraphNode* tgt, ArcInfo&& _info)
+            : src_node(src), tgt_node(tgt), info(std::forward<ArcInfo>(_info))
+        {
+            // empty
+        }
+
+    public:
+        GraphNode* get_src_node()
+        {
+            return src_node;
+        }
+
+        GraphNode* get_src_node() const
+        {
+            return src_node;
+        }
+
+        GraphNode* get_tgt_node()
+        {
+            return tgt_node;
+        }
+
+        GraphNode* get_tgt_node() const
+        {
+            return tgt_node;
+        }
+
+        GraphNode* get_connected_node(GraphNode* node)
+        {
+            if (node == get_src_node())
+            {
+                return get_tgt_node();
+            }
+
+            if (node == get_tgt_node())
+            {
+                return get_src_node();
+            }
+
+            throw std::logic_error("Arc is not adjacent to node");
+        }
+
+        GraphNode* get_connected_node(GraphNode* node) const
+        {
+            if (node == get_src_node())
+            {
+                return get_tgt_node();
+            }
+
+            if (node == get_tgt_node())
+            {
+                return get_src_node();
+            }
+
+            throw std::logic_error("Arc is not adjacent to node");
+        }
+
+        ArcInfo& get_info()
+        {
+            return info;
+        }
+
+        const ArcInfo& get_info() const
+        {
+            return info;
+        }
+    };
+
+} // end namespace Designar

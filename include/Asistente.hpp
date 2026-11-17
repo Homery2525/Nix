@@ -1,4 +1,4 @@
-// Asistente.hpp - Coordina NLU + repositorio y produce la respuesta en texto.
+                                                                              
 #pragma once
 #include <ctime>
 #include <functional>
@@ -18,9 +18,9 @@ public:
     std::string procesar(const std::string& frase);
     std::optional<std::string> recordarPersona(const std::string& frase);
 
-    // true si el motor local reconoce la intención (si no, conviene pasar la frase a Claude).
-    // Reutiliza el análisis en caché: el servidor llama a entiende() y luego a procesar() con la misma frase,
-    // y antes el NLU (regex incluidas) se ejecutaba dos veces.
+                                                                                              
+                                                                                                              
+                                                               
     bool entiende(const std::string& frase) const {
         return analizar(frase).intencion != Intencion::Desconocida;
     }
@@ -32,21 +32,21 @@ public:
     bool eliminarNota(int id) { return repo_.eliminarNota(id); }
     bool esperandoConfirmacion() const { return esperandoConfirmacionLimpiarHoy_ || esperandoConfirmacionVaciarCloset_; }
 
-    // ¿Nix hizo una pregunta y espera la respuesta del usuario? (confirmar, «¿formal o informal?»…)
+                                                                                                    
     bool esperandoRespuesta() const { return esperandoConfirmacion() || prendaPendiente_ || outfitPendiente_; }
 
-    // ── Closet ──
+                   
     std::vector<Prenda> prendas() const { return repo_.prendas(); }
-    // Alta directa (formulario de la interfaz): valida y devuelve la prenda; si no es válida, deja el motivo en `error`.
+                                                                                                                         
     std::optional<Prenda> agregarPrenda(const std::string& nombre, const std::string& categoria,
                                         const std::string& color, const std::string& estilo, std::string& error);
     bool eliminarPrenda(int id) { return repo_.eliminarPrenda(id); }
     Outfit outfitPara(const std::string& estilo, const std::string& color = "", bool abrigo = false) const {
         return armarOutfit(repo_.prendas(), estilo, color, abrigo);
     }
-    // Color de ropa que el usuario dijo preferir en sus notas («Preferencias»); "" si no hay ninguno.
+                                                                                                      
     std::string colorPreferido() const;
-    // Outfit que armó la última respuesta (vacío si la última respuesta no sugirió ropa).
+                                                                                          
     const std::optional<Outfit>& ultimoOutfit() const { return ultimoOutfit_; }
 
     std::string describirCuando(std::time_t cuando, bool tieneHora) const;
@@ -81,23 +81,23 @@ private:
     std::string sugerirOutfit(const Entidades& e, const std::string& frase);
     std::string responderOutfit(const std::string& estilo, bool abrigo, const std::string& compromiso);
 
-    // Memoria de la conversación: permite «complétala», «cámbiala al viernes», «¿y mañana?» y «deshaz eso».
+                                                                                                            
     struct Accion {
         enum Tipo { Crear, Completar, Eliminar, Reprogramar, EliminarDia, AgregarPrenda, QuitarPrenda, VaciarClosetA } tipo;
         int id;
         Tarea antes;
         ListaEnlazada<Tarea> varias{};
-        Prenda prenda{};                 // AgregarPrenda / QuitarPrenda
-        ListaEnlazada<Prenda> prendas{}; // VaciarClosetA
+        Prenda prenda{};                                                
+        ListaEnlazada<Prenda> prendas{};                 
     };
     ListaEnlazada<Accion> historial_;
-    mutable int ultimaTareaId_ = 0;  // mutable: listar una sola tarea fija el contexto de «complétala» sin const_cast
+    mutable int ultimaTareaId_ = 0;                                                                                   
     Intencion ultimaIntencion_ = Intencion::Desconocida;
     bool esperandoConfirmacionLimpiarHoy_ = false;
     bool esperandoConfirmacionVaciarCloset_ = false;
-    std::optional<PrendaDicha> prendaPendiente_;  // se preguntó «¿formal o informal?» al guardar una prenda
-    bool outfitPendiente_ = false, outfitAbrigoPendiente_ = false;  // se preguntó el estilo para sugerir un outfit
-    int ultimaPrendaId_ = 0;                      // permite «bórrala» justo después de guardar una prenda
+    std::optional<PrendaDicha> prendaPendiente_;                                                            
+    bool outfitPendiente_ = false, outfitAbrigoPendiente_ = false;                                                 
+    int ultimaPrendaId_ = 0;                                                                              
     std::optional<Outfit> ultimoOutfit_;
 
     struct CacheAnalisis { std::string frase; std::time_t ahora = 0; bool valido = false; Resultado resultado; };
@@ -106,5 +106,5 @@ private:
     Repositorio repo_;
     std::string usuario_;
     std::function<std::time_t()> reloj_;
-    mutable unsigned turno_ = 0;  // rota las fórmulas de cortesía para no sonar repetitivo
+    mutable unsigned turno_ = 0;                                                           
 };

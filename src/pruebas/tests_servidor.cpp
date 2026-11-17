@@ -1,4 +1,4 @@
-// Pruebas del servidor: JSON, HTTP, habilidades sin IA (red simulada) y API. Se ejecutan al construir la imagen de Docker.
+                                                                                                                           
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -27,7 +27,7 @@ static int fallos = 0;
 
 static bool contiene(const std::string& s, const std::string& sub) { return s.find(sub) != std::string::npos; }
 
-// 2026-10-11 15:00 en Caracas (UTC-4) = domingo
+                                                
 static std::time_t AHORA() { std::tm t{}; t.tm_year = 126; t.tm_mon = 9; t.tm_mday = 11; t.tm_hour = 19; return timegm(&t); }
 
 static RespuestaHttp ok(const std::string& cuerpo) { return {200, cuerpo}; }
@@ -80,7 +80,7 @@ struct Banco {
 
 
 #ifdef PRUEBAS_API
-// ── API completa del servidor (sin red real): seguridad, enrutado, persistencia, calendario y cerebros ──
+                                                                                                           
 static int probarApi() {
     const int antes = fallos;
     namespace fs = std::filesystem;
@@ -270,7 +270,7 @@ static int probarApi() {
         auto agenda = decir("hoy a las 6");
         CHECK(contiene(agenda.at("respuesta").texto(), "agendado «Dar un paseo por el parque»"));
     }
-    // Seguridad
+                
     CHECK(app->manejar(peticion("GET", "/api/tareas", "", {{"host", "evil.example.com"}})).estado == 403);
     CHECK(app->manejar(peticion("POST", "/api/mensaje", "{}", {{"x-jarvis", ""}})).estado == 403);
     CHECK(app->manejar(peticion("GET", "/../secreto.txt")).estado == 404);
@@ -281,7 +281,7 @@ static int probarApi() {
     CHECK(app->manejar(peticion("GET", "/salud")).cuerpo == "ok");
     { auto r = app->manejar(peticion("GET", "/")); CHECK(r.estado == 200 && contiene(r.tipo, "text/html") && contiene(r.cuerpo, "jarvis")); }
 
-    // Habilidades, núcleo y memoria de conversación (modo sin IA)
+                                                                  
     CHECK(contiene(ajustar("{\"proveedor\":\"local\"}").cuerpo, "\"proveedor\":\"local\""));
     CHECK(contiene(msg("hola Jarvis").at("respuesta").texto(), "Todos los sistemas en línea"));
     Json r = msg("cuánto es quince por ocho");
@@ -417,7 +417,7 @@ static int probarApi() {
     r = msg("Le gustan los libros");
     CHECK(r.at("origen").texto() == "local" && contiene(r.at("respuesta").texto(), "Si disfruta la lectura"));
 
-    // Datos, zona horaria y calendario
+                                       
     auto tareas = *Json::parse(app->manejar(peticion("GET", "/api/tareas")).cuerpo);
     CHECK(tareas.at("tareas").size() == 1 && !tareas.at("tareas").at(0).at("completada").booleano());
     const int id = static_cast<int>(tareas.at("tareas").at(0).at("id").entero());
@@ -429,10 +429,10 @@ static int probarApi() {
     CHECK(contiene(app->manejar(peticion("POST", "/api/tarea/completar", "{\"id\":9999}")).cuerpo, "false"));
     CHECK(!contiene(app->manejar(peticion("GET", "/api/calendario.ics")).cuerpo, "BEGIN:VEVENT"));
     CHECK(contiene(ajustar("{\"tz\":\"Asia/Tokyo\"}").cuerpo, "Asia/Tokyo"));
-    CHECK(contiene(ajustar("{\"tz\":\"../../etc/passwd\"}").cuerpo, "Asia/Tokyo"));  // zona inválida: se ignora
+    CHECK(contiene(ajustar("{\"tz\":\"../../etc/passwd\"}").cuerpo, "Asia/Tokyo"));                             
     ajustar("{\"tz\":\"America/Caracas\"}");
 
-    // Nombre y ajustes persistentes
+                                    
     CHECK(contiene(msg("Jarvis, llámame Daniel").at("respuesta").texto(), "Daniel"));
     CHECK(contiene(ajustar("{}").cuerpo, "\"trato\":\"Daniel\""));
     CHECK(contiene(msg("gracias").at("respuesta").texto(), "Daniel"));
@@ -444,13 +444,13 @@ static int probarApi() {
     CHECK(contiene(msg("ok, ¿qué hora es?").at("respuesta").texto(), "Son las"));
     ajustar("{\"ciudad\":\"Mérida\",\"proveedor\":\"inventado\",\"modeloOllama\":\"../x\"}");
     app.reset();
-    app = std::make_unique<Servidor>(cfg, http);  // reinicio: se recupera todo desde /data
+    app = std::make_unique<Servidor>(cfg, http);                                           
     auto aj = *Json::parse(ajustar("{}").cuerpo);
     CHECK(aj.at("trato").texto() == "Daniel" && aj.at("ciudad").texto() == "Mérida" && aj.at("proveedor").texto() == "local");
     CHECK(aj.at("modeloOllama").texto() == "llama3.2" && aj.at("claves").at("claude").booleano());
     { std::ifstream f(base / "datos" / "ajustes.json"); std::stringstream ss; ss << f.rdbuf(); CHECK(Json::parse(ss.str())); }
 
-    // Cerebros en la nube (red simulada)
+                                         
     msg("Agendar cena familiar mañana a las 7");
     std::vector<std::string> cuerpos;
     int llamadasClaude = 0;
@@ -481,13 +481,13 @@ static int probarApi() {
     CHECK(r.at("origen").texto() == "local" && contiene(r.at("respuesta").texto(), "roja") && cuerpos.empty());
     r = msg("compara dos laptops");
     CHECK(r.at("origen").texto() == "nube" && r.at("proveedor").texto() == "claude" && r.at("respuesta").texto() == "Parte uno. Parte dos.");
-    CHECK(cuerpos.size() == 2 && contiene(cuerpos[0], "web_search_20250305") && contiene(cuerpos[1], "server_tool_use"));  // pause_turn continuó
+    CHECK(cuerpos.size() == 2 && contiene(cuerpos[0], "web_search_20250305") && contiene(cuerpos[1], "server_tool_use"));                        
     CHECK(contiene(cuerpos[0], "Al recomendar o elegir por el usuario"));
     CHECK(contiene(cuerpos[0], "Me gusta vestir de azul y prefiero zapatos cómodos"));
     CHECK(contiene(cuerpos[0], "Cena familiar") && !contiene(cuerpos[0], "clave alfa") && !contiene(cuerpos[0], "Ana"));
     cuerpos.clear(); llamadasClaude = 1;
     msg("explícame los agujeros negros");
-    CHECK(contiene(cuerpos.back(), "compara dos laptops") && contiene(cuerpos.back(), "Parte uno. Parte dos."));  // memoria de la conversación
+    CHECK(contiene(cuerpos.back(), "compara dos laptops") && contiene(cuerpos.back(), "Parte uno. Parte dos."));                               
 
     ajustar("{\"proveedor\":\"gemini\"}");
     cuerpos.clear();
@@ -495,7 +495,7 @@ static int probarApi() {
     CHECK(r.at("respuesta").texto() == "Respuesta de Gemini" && cuerpos.size() == 2 && contiene(cuerpos[0], "google_search") && !contiene(cuerpos[1], "google_search"));
     cuerpos.clear();
     msg("analiza otra cosa");
-    CHECK(cuerpos.size() == 1 && !contiene(cuerpos[0], "google_search"));  // recuerda que la cuenta no admite búsqueda
+    CHECK(cuerpos.size() == 1 && !contiene(cuerpos[0], "google_search"));                                              
 
     ajustar("{\"proveedor\":\"ollama\"}");
     CHECK(msg("explica la gravedad").at("respuesta").texto() == "Hola desde Ollama");
@@ -512,13 +512,13 @@ static int probarApi() {
     ajustar("{\"proveedor\":\"local\"}");
     red = [](const std::string&, const std::string&, const std::vector<std::string>&) -> RespuestaHttp { throw ErrorRed("sin red"); };
     CHECK(contiene(msg("compara dos laptops").at("respuesta").texto(), "no he comprendido"));
-    {  // ── Closet: recomendación con las prendas del usuario, API y privacidad ──
+    {                                                                              
         std::vector<std::string> cuerpos;
         FuncionHttp httpCloset = [&](const std::string&, const std::string& url, const std::string& cuerpo,
                                      const std::vector<std::string>&, int) -> RespuestaHttp {
             cuerpos.push_back(cuerpo);
             if (contiene(url, "api.anthropic.com")) return {200, R"({"content":[{"type":"text","text":"Respuesta de la nube."}],"stop_reason":"end_turn"})"};
-            return falsoHttp("GET", url, cuerpo, {}, 0);   // lluvia 40 % y máxima 23 °C en Mérida
+            return falsoHttp("GET", url, cuerpo, {}, 0);                                          
         };
         auto nuevo = [&](const char* nombre, const std::string& ciudad) {
             ConfigServidor c = cfg;
@@ -541,7 +541,7 @@ static int probarApi() {
         CHECK(r.at("origen").texto() == "local" && contiene(r.at("respuesta").texto(), "con las prendas de su closet"));
         CHECK(contiene(r.at("respuesta").texto(), "camisa azul") && contiene(r.at("respuesta").texto(), "pantalón gris") &&
               contiene(r.at("respuesta").texto(), "zapatos negros"));
-        CHECK(contiene(r.at("respuesta").texto(), "40% de lluvia") && contiene(r.at("respuesta").texto(), "chaqueta gris"));  // paraguas -> abrigo
+        CHECK(contiene(r.at("respuesta").texto(), "40% de lluvia") && contiene(r.at("respuesta").texto(), "chaqueta gris"));                       
         CHECK(r.at("outfit").at("completo").booleano() && r.at("outfit").at("abrigo").at("nombre").texto() == "chaqueta gris");
         CHECK(conLluvia->responder("hola").at("outfit").esNulo());
 
@@ -560,24 +560,24 @@ static int probarApi() {
         auto sinCiudad = nuevo("datos-closet-sin-ciudad", "");
         vestuario(*sinCiudad);
         r = sinCiudad->responder("qué me pongo para una entrevista");
-        CHECK(!contiene(r.at("respuesta").texto(), "lluvia") && r.at("outfit").at("abrigo").esNulo());   // sin ciudad no se inventa el clima
+        CHECK(!contiene(r.at("respuesta").texto(), "lluvia") && r.at("outfit").at("abrigo").esNulo());                                       
 
         auto vacio = nuevo("datos-closet-vacio", "");
         r = vacio->responder("qué me pongo para una entrevista");
-        CHECK(contiene(r.at("respuesta").texto(), "le recomiendo una camisa") && r.at("outfit").esNulo());   // respaldo genérico de siempre
+        CHECK(contiene(r.at("respuesta").texto(), "le recomiendo una camisa") && r.at("outfit").esNulo());                                  
 
         auto soloInformal = nuevo("datos-closet-informal", "");
         soloInformal->responder("guarda mi camiseta roja informal");
         r = soloInformal->responder("qué me pongo para una entrevista");
         CHECK(contiene(r.at("respuesta").texto(), "le recomiendo una camisa") && contiene(r.at("respuesta").texto(), "no tiene prendas formales"));
 
-        // El núcleo pregunta el estilo y la respuesta corta no se pierde
+                                                                         
         auto pregunta2 = nuevo("datos-closet-pregunta2", "");
         CHECK(contiene(pregunta2->responder("agrega unos zapatos negros").at("respuesta").texto(), "formal o informal"));
         r = pregunta2->responder("formal");
         CHECK(r.at("origen").texto() == "local" && contiene(r.at("respuesta").texto(), "Guardada"));
 
-        // API
+              
         auto api = nuevo("datos-closet-api", "");
         Json lista = *Json::parse(api->manejar(peticion("GET", "/api/closet")).cuerpo);
         CHECK(lista.at("prendas").size() == 0);
@@ -591,9 +591,9 @@ static int probarApi() {
         CHECK(api->manejar(peticion("POST", "/api/outfit", R"({"estilo":"raro"})")).estado == 400);
         CHECK(contiene(api->manejar(peticion("POST", "/api/closet/eliminar", R"({"id":1})")).cuerpo, "\"ok\":true"));
         CHECK(Json::parse(api->manejar(peticion("GET", "/api/closet")).cuerpo)->at("prendas").size() == 0);
-        CHECK(!Json::parse(api->manejar(peticion("GET", "/api/clima")).cuerpo)->at("disponible").booleano());   // sin ciudad
+        CHECK(!Json::parse(api->manejar(peticion("GET", "/api/clima")).cuerpo)->at("disponible").booleano());                
 
-        // Privacidad: lo que hay en el closet no viaja a la nube
+                                                                 
         cuerpos.clear();
         auto nube = nuevo("datos-closet-nube", "");
         nube->responder("guarda mi camisa azul formal");
@@ -611,7 +611,7 @@ static int probarApi() {
 #endif
 
 int main() {
-    // ── JSON y HTTP (cliente libcurl real contra el servidor propio) ──
+                                                                         
     {
         auto k = Json::parse("{\"a\":[1,2.5,{\"b\":null}],\"s\":\"\\u00e1\\ud83d\\ude00\\n\",\"t\":true}");
         CHECK(k && k->at("a").at(1).numero() == 2.5 && k->at("s").texto() == "á😀\n" && k->at("t").booleano());
@@ -643,7 +643,7 @@ int main() {
         hilo.join();
     }
 
-    // ── Calculadora ──
+                        
     {
         Banco b;
         struct { const char* frase; const char* esperado; } casos[] = {
@@ -657,7 +657,7 @@ int main() {
             CHECK(contiene(r, std::string("es ") + c.esperado + ","));
             if (!contiene(r, std::string("es ") + c.esperado + ",")) std::printf("    '%s' -> %s\n", c.frase, r.c_str());
         }
-        CHECK(b.di("raíz cuadrada de 144") == "<nada>");  // sin verbo y sin empezar por número
+        CHECK(b.di("raíz cuadrada de 144") == "<nada>");                                       
         CHECK(contiene(b.di("cuánto es 5 entre 0"), "cero"));
         CHECK(b.di("recuérdame comprar 2 por 1") == "<nada>");
         CHECK(b.di("tengo 2 por 3 reuniones") == "<nada>");
@@ -676,10 +676,10 @@ int main() {
         std::string multiplicidades = b.di("resuelve x^3 - 3x + 2 = 0");
         CHECK(contiene(multiplicidades, "x1 = -2") && contiene(multiplicidades, "x2 = 1") &&
               contiene(multiplicidades, "x3 = 1"));
-        CHECK(contiene(b.di("resuelve 2 + 2"), "El resultado es 4"));  // conserva la evaluación aritmética existente
+        CHECK(contiene(b.di("resuelve 2 + 2"), "El resultado es 4"));                                                
     }
 
-    // ── Conversor ──
+                      
     {
         Banco b;
         CHECK(contiene(b.di("convierte 5 millas a kilómetros"), "8,0467 kilómetros"));
@@ -690,7 +690,7 @@ int main() {
         CHECK(contiene(b.di("convierte 5 kilos a metros"), "no miden lo mismo"));
     }
 
-    // ── Fechas, hora mundial ──
+                                 
     {
         Banco b;
         std::string n = b.di("cuántos días faltan para navidad");
@@ -718,7 +718,7 @@ int main() {
         CHECK(b.di("qué hora es") == "<nada>");
     }
 
-    // ── Temporizador ──
+                         
     {
         Banco b;
         struct { const char* frase; long seg; } casos[] = {{"pon un temporizador de 10 minutos", 600}, {"temporizador de una hora y media", 5400},
@@ -736,7 +736,7 @@ int main() {
         CHECK(b.di("recuérdame el temporizador de la pasta") == "<nada>");
     }
 
-    // ── Azar y charla ──
+                          
     {
         Banco b;
         std::string d = b.di("tira un dado");
@@ -761,7 +761,7 @@ int main() {
         CHECK(contiene(b.di("adiós"), "Hasta pronto"));
     }
 
-    // ── Clima ──
+                  
     {
         Banco b;
         std::string r = b.di("qué clima hace en Mérida");
@@ -781,7 +781,7 @@ int main() {
         CHECK(contiene(s.di("qué clima hace en Mérida"), "No logro completar"));
     }
 
-    // ── Wikipedia ──
+                      
     {
         Banco b;
         std::string r = b.di("qué es la fotosíntesis");
@@ -801,7 +801,7 @@ int main() {
         CHECK(ex && contiene(ex->respuesta, "Según Wikipedia"));
     }
 
-    {  // consejoClima: reglas puras (paraguas desde 30 % de lluvia; abrigo si la máxima es ≤ 18 °C)
+    {                                                                                               
         ConsejoClima c = consejoClima({40, 23.1, "Mérida"});
         CHECK(c.disponible && c.paraguas && !c.abrigo && c.ciudad == "Mérida");
         c = consejoClima({29, 18.0, "Oslo"});
@@ -809,14 +809,14 @@ int main() {
         c = consejoClima({10, 25.0, "Cádiz"});
         CHECK(c.disponible && !c.paraguas && !c.abrigo);
         c = consejoClima({-1, 5.0, ""});
-        CHECK(!c.disponible && !c.paraguas && !c.abrigo);   // sin pronóstico no se aconseja nada
+        CHECK(!c.disponible && !c.paraguas && !c.abrigo);                                        
         Banco sinCiudad;
         CHECK(!consejoClimaLocal(sinCiudad.ctx).disponible);
         Banco conCiudad(falsoHttp, "Mérida");
         const ConsejoClima real = consejoClimaLocal(conCiudad.ctx);
         CHECK(real.disponible && real.paraguas && !real.abrigo && real.probabilidadLluvia == 40);
         Banco caido(roto, "Mérida");
-        CHECK(!consejoClimaLocal(caido.ctx).disponible);    // red caída: no lanza, simplemente no hay consejo
+        CHECK(!consejoClimaLocal(caido.ctx).disponible);                                                      
     }
 
 #ifdef PRUEBAS_API

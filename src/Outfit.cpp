@@ -13,7 +13,7 @@ std::optional<Prenda> mejor(const std::vector<Prenda>& closet, const std::string
                             const std::string& colorPreferido, const std::string& colorSuperior) {
     const Prenda* elegida = nullptr;
     int mejorPuntaje = -1000;
-    for (const Prenda& p : closet) {  // el closet llega ordenado por id
+    for (const Prenda& p : closet) {                                    
         if (p.categoria() != categoria || (!estilo.empty() && p.estilo() != estilo)) continue;
         int puntaje = 0;
         if (!colorPreferido.empty() && p.color() == colorPreferido) puntaje += categoria == "superior" ? 3 : 1;
@@ -32,7 +32,7 @@ std::string etiquetaFaltante(const std::string& categoria, const std::string& es
     return estilo.empty() ? base : base + " " + estilo;
 }
 
-}  // namespace
+}              
 
 Outfit armarOutfit(const std::vector<Prenda>& closet, const std::string& estilo, const std::string& colorPreferido,
                    bool necesitaAbrigo) {

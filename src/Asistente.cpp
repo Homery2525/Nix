@@ -60,7 +60,7 @@ std::optional<bool> respuestaConfirmacion(const std::string& frase) {
         if (texto::contiene(respuesta, afirmativa)) return true;
     return std::nullopt;
 }
-}  // namespace
+}              
 
 Asistente::Asistente(std::string carpetaDatos, std::string usuario)
     : repo_(std::move(carpetaDatos)), usuario_(std::move(usuario)) {}
@@ -103,9 +103,9 @@ bool Asistente::vencida(const Tarea& t) const {
 }
 
 std::string Asistente::resumen(bool corto) const {
-    // Una sola pasada sobre la lista propia, guardando punteros (antes: dos copias completas de pendientes()).
+                                                                                                               
     std::vector<const Tarea*> hoy, vencidas;
-    const Tarea* siguiente = nullptr;  // lo más próximo que aún no ha ocurrido y no es de hoy
+    const Tarea* siguiente = nullptr;                                                         
     const std::time_t ahoraTs = ahora();
     for (const Tarea& t : repo_.listaTareas()) {
         if (t.completada()) continue;
@@ -153,7 +153,7 @@ std::string Asistente::avisoDeConflicto(const Tarea& nueva) const {
 
 std::optional<int> Asistente::resolverTarea(const Entidades& e, bool soloPendientes) {
     if (!e.asunto.empty()) return repo_.buscarTarea(e.asunto, soloPendientes);
-    if (ultimaTareaId_) {  // sin asunto: «complétala», «bórrala», «cámbiala…» se refieren a la última tarea mencionada
+    if (ultimaTareaId_) {                                                                                              
         auto t = repo_.obtenerTarea(ultimaTareaId_);
         if (t && (!soloPendientes || !t->completada())) return ultimaTareaId_;
     }
@@ -262,7 +262,7 @@ std::optional<std::string> Asistente::recordarPersona(const std::string& frase) 
 }
 
 std::string Asistente::listarTareas(const Entidades& e) const {
-    std::vector<const Tarea*> lista;  // punteros a la lista propia: no se copia ninguna tarea
+    std::vector<const Tarea*> lista;                                                          
     for (const Tarea& t : repo_.listaTareas()) {
         if (t.completada()) continue;
         if (e.cuando && (!t.cuando() || !mismoDia(t.cuando(), e.cuando))) continue;
@@ -323,11 +323,11 @@ std::string Asistente::reprogramar(const Entidades& e) {
     Tarea antes = *repo_.obtenerTarea(*id);
     std::time_t nuevo = e.cuando;
     bool conHora = e.tieneHora;
-    if (!e.fechaExplicita && e.tieneHora && antes.cuando()) {          // «a las 5»: conserva el día que ya tenía
+    if (!e.fechaExplicita && e.tieneHora && antes.cuando()) {                                                    
         std::tm d = tmLocal(antes.cuando()), hh = tmLocal(e.cuando);
         d.tm_hour = hh.tm_hour; d.tm_min = hh.tm_min; d.tm_sec = 0; d.tm_isdst = -1;
         nuevo = std::mktime(&d);
-    } else if (e.fechaExplicita && !e.tieneHora && antes.tieneHora()) {  // «para el viernes»: conserva la hora
+    } else if (e.fechaExplicita && !e.tieneHora && antes.tieneHora()) {                                        
         std::tm d = tmLocal(e.cuando), hh = tmLocal(antes.cuando());
         d.tm_hour = hh.tm_hour; d.tm_min = hh.tm_min; d.tm_sec = 0; d.tm_isdst = -1;
         nuevo = std::mktime(&d);
@@ -432,7 +432,7 @@ std::string Asistente::procesar(const std::string& frase) {
         return "Por favor, responda afirmativamente para confirmar la limpieza o negativamente para cancelarla, " +
                usuario_ + ".";
     }
-    if (prendaPendiente_) {  // se preguntó el estilo de una prenda: la respuesta corta es «formal» o «informal»
+    if (prendaPendiente_) {                                                                                     
         PrendaDicha dicha = *prendaPendiente_;
         prendaPendiente_.reset();
         const std::string estilo = closet::estiloEnTexto(frase);
@@ -442,7 +442,7 @@ std::string Asistente::procesar(const std::string& frase) {
             return completarPrenda(dicha);
         }
     }
-    if (outfitPendiente_) {  // se preguntó para qué estilo es el outfit
+    if (outfitPendiente_) {                                             
         const bool abrigo = outfitAbrigoPendiente_;
         outfitPendiente_ = outfitAbrigoPendiente_ = false;
         const std::string estilo = closet::estiloEnTexto(frase);
@@ -455,14 +455,14 @@ std::string Asistente::procesar(const std::string& frase) {
     const Resultado r = analizar(frase);
     const Intencion previa = ultimaIntencion_;
 
-    // «bórrala» justo después de guardar una prenda se refiere a esa prenda, no a una tarea.
+                                                                                             
     if (r.intencion == Intencion::EliminarTarea && previa == Intencion::GuardarPrenda && ultimaPrendaId_ &&
         texto::dividir(r.normalizado).size() <= 2) {
         ultimaIntencion_ = Intencion::EliminarPrenda;
         return quitarPrendaPorId(ultimaPrendaId_);
     }
 
-    // Seguimiento de la conversación: «¿y mañana?», «¿y el viernes?» tras consultar las tareas.
+                                                                                                
     if (r.intencion == Intencion::Desconocida && previa == Intencion::ListarTareas) {
         Entidades e = nlu_.fechaDe(frase, ahora());
         if (e.cuando && texto::dividir(r.normalizado).size() <= 5) return listarTareas(e);
@@ -504,11 +504,11 @@ std::string Asistente::procesar(const std::string& frase) {
            ". Pruebe con «agendar reunión mañana a las 4» o diga «ayuda».";
 }
 
-// ───────────────────────── Closet ─────────────────────────
+                                                             
 
 std::string Asistente::colorPreferido() const {
     const auto& notas = repo_.notas();
-    for (auto it = notas.rbegin(); it != notas.rend(); ++it) {  // la preferencia más reciente manda
+    for (auto it = notas.rbegin(); it != notas.rend(); ++it) {                                      
         if (it->categoria() != "Preferencias") continue;
         const std::string texto = texto::normalizar(it->contenido());
         const bool habla_de_ropa = texto::contiene(texto, "vestir") || texto::contiene(texto, "ropa") ||
@@ -620,11 +620,11 @@ std::string Asistente::confirmarVaciarCloset() {
 }
 
 std::string Asistente::sugerirOutfit(const Entidades& e, const std::string& frase) {
-    if (repo_.listaPrendas().empty()) return responderOutfit("", false, "");  // closet vacío: el mensaje es el mismo
+    if (repo_.listaPrendas().empty()) return responderOutfit("", false, "");                                         
     std::string estilo = e.prenda.estilo;
     if (estilo.empty()) estilo = estiloDeEvento(frase, Prioridad::Media);
     std::string compromiso;
-    if (estilo.empty()) {  // sin pista en la frase: se mira el primer compromiso de hoy que tenga estilo
+    if (estilo.empty()) {                                                                                
         const Tarea* elegida = nullptr;
         for (const Tarea& t : repo_.listaTareas()) {
             if (t.completada() || !t.cuando() || !mismoDia(t.cuando(), ahora()) || t.estiloEvento().empty()) continue;

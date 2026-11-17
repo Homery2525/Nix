@@ -10,7 +10,7 @@
 #include <mutex>
 #include <thread>
 
-// ───────────────────────── Cliente (libcurl) ─────────────────────────
+                                                                        
 
 namespace {
 
@@ -19,7 +19,7 @@ size_t escribir(char* datos, size_t tam, size_t n, void* usuario) {
     return tam * n;
 }
 
-}  // namespace
+}              
 
 RespuestaHttp httpCurl(const std::string& metodo, const std::string& url, const std::string& cuerpo,
                        const std::vector<std::string>& cabeceras, int timeoutSeg) {

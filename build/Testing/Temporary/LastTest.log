@@ -1,0 +1,118 @@
+Start testing: Nov 17 17:49 -04
+----------------------------------------------------------
+1/6 Testing: tests_fase1
+1/6 Test: tests_fase1
+Command: "/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/tests_fase1"
+Directory: /Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build
+"tests_fase1" start time: Nov 17 17:49 -04
+Output:
+----------------------------------------------------------
+
+Fase 1: todas las pruebas pasaron
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"tests_fase1" end time: Nov 17 17:49 -04
+"tests_fase1" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/6 Testing: tests_fase2
+2/6 Test: tests_fase2
+Command: "/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/tests_fase2"
+Directory: /Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build
+"tests_fase2" start time: Nov 17 17:49 -04
+Output:
+----------------------------------------------------------
+
+Fase 2: todas las pruebas pasaron
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"tests_fase2" end time: Nov 17 17:49 -04
+"tests_fase2" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/6 Testing: tests
+3/6 Test: tests
+Command: "/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/tests"
+Directory: /Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build
+"tests" start time: Nov 17 17:49 -04
+Output:
+----------------------------------------------------------
+Como usted ordene, Homery. He agendado «Reunión de Programación 3» para hoy a las 4 de la tarde. Evento formal. Supuse que era a las 4 de la tarde; corríjame si me equivoco.
+Con gusto, Homery. Queda agendado «Entregar el informe» para mañana a las 8 de la mañana. Lo he marcado como prioritario. Evento formal.
+Me ocupo de ello, Homery. He registrado «Comprar leche».
+Anotado, Homery. Lo he guardado en Universidad: El parcial de cálculo es el viernes.
+Tiene 3 tareas pendientes, Homery:
+1. Entregar el informe (mañana a las 8 de la mañana)
+2. Reunión de Programación 3 (hoy a las 4 de la tarde)
+3. Comprar leche
+Hecho, Homery. He marcado como completada: Comprar leche.
+Muy bien, Homery. He eliminado la tarea: Entregar el informe.
+Son las 3 de la tarde, Homery. Hoy es domingo 11 de octubre.
+Tiene 1 nota, Homery:
+• El parcial de cálculo es el viernes
+
+Todas las pruebas pasaron
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"tests" end time: Nov 17 17:49 -04
+"tests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/6 Testing: tests_closet
+4/6 Test: tests_closet
+Command: "/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/tests_closet"
+Directory: /Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build
+"tests_closet" start time: Nov 17 17:49 -04
+Output:
+----------------------------------------------------------
+
+Closet: todas las pruebas pasaron
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"tests_closet" end time: Nov 17 17:49 -04
+"tests_closet" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/6 Testing: tests_servidor
+5/6 Test: tests_servidor
+Command: "/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/tests_servidor"
+Directory: /Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build
+"tests_servidor" start time: Nov 17 17:49 -04
+Output:
+----------------------------------------------------------
+
+Todas las pruebas del servidor pasaron
+<end of output>
+Test time =   0.14 sec
+----------------------------------------------------------
+Test Passed.
+"tests_servidor" end time: Nov 17 17:49 -04
+"tests_servidor" time elapsed: 00:00:00
+----------------------------------------------------------
+
+6/6 Testing: tests_api
+6/6 Test: tests_api
+Command: "/Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build/tests_api"
+Directory: /Users/danielalejandrouzcateguivillamizar/Documents/Nix_D/files/nix_fase4/build
+"tests_api" start time: Nov 17 17:49 -04
+Output:
+----------------------------------------------------------
+
+API del hito 4: todas las pruebas pasaron
+<end of output>
+Test time =   0.22 sec
+----------------------------------------------------------
+Test Passed.
+"tests_api" end time: Nov 17 17:49 -04
+"tests_api" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Nov 17 17:49 -04

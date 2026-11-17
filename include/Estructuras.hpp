@@ -1,12 +1,12 @@
-// Estructuras.hpp - Lista de Nix, construida sobre la biblioteca DeSiGNAR (https://github.com/r3mmurd/DeSiGNAR).
-//
-// Toda la persistencia y la lógica de Nix (tareas ordenadas por urgencia, notas y closet) usan esta clase. Por dentro
-// guarda sus elementos en una `Designar::DLList<T>` (lista doblemente enlazada de DeSiGNAR, cabecera <list.hpp>); este
-// archivo es el único punto del proyecto que conoce la API de DeSiGNAR. Conserva exactamente la interfaz que ya tenía la
-// lista propia anterior (push_back, insertarOrdenado, erase, comoVector…), así que el comportamiento de Nix no cambia.
+                                                                                                                 
+  
+                                                                                                                      
+                                                                                                                       
+                                                                                                                         
+                                                                                                                       
 #pragma once
 
-#include <list.hpp>  // DeSiGNAR: Designar::DLList
+#include <list.hpp>                               
 
 #include <cstddef>
 #include <utility>
@@ -18,7 +18,7 @@ class ListaEnlazada {
 
 public:
     using iterator = typename Lista::Iterator;
-    using const_iterator = typename Lista::Iterator;  // DLList devuelve el mismo tipo de iterador para listas const
+    using const_iterator = typename Lista::Iterator;                                                                
 
     ListaEnlazada() = default;
     ListaEnlazada(const ListaEnlazada& otra) : lista_(otra.lista_) {}
@@ -26,7 +26,7 @@ public:
 
     ListaEnlazada& operator=(const ListaEnlazada& otra) {
         if (this != &otra) {
-            ListaEnlazada copia(otra);  // copia primero: si algo falla, esta lista queda intacta
+            ListaEnlazada copia(otra);                                                           
             intercambiar(copia);
         }
         return *this;
@@ -58,12 +58,12 @@ public:
     T& back() { return lista_.get_last(); }
     const T& back() const { return lista_.get_last(); }
 
-    void push_front(const T& valor) { lista_.insert(valor); }   // DLList::insert agrega al inicio
+    void push_front(const T& valor) { lista_.insert(valor); }                                     
     void push_front(T&& valor) { lista_.insert(std::move(valor)); }
     void push_back(const T& valor) { lista_.append(valor); }
     void push_back(T&& valor) { lista_.append(std::move(valor)); }
 
-    // Inserta `valor` antes del primer elemento que `comparar` ponga detrás de él (la lista queda ordenada y es estable).
+                                                                                                                          
     template <typename Comparador>
     iterator insertarOrdenado(const T& valor, Comparador comparar) {
         iterator posicion = begin();
@@ -79,7 +79,7 @@ public:
     }
 
     iterator insert(iterator posicion, const T& valor) {
-        posicion.insert_prev(valor);  // en end() equivale a agregar al final
+        posicion.insert_prev(valor);                                         
         return anteriorA(posicion);
     }
 
@@ -88,11 +88,11 @@ public:
         return anteriorA(posicion);
     }
 
-    // Quita el elemento al que apunta `posicion` y devuelve un iterador al siguiente (end() si era el último).
+                                                                                                               
     iterator erase(iterator posicion) {
         if (posicion == end()) return end();
         iterator siguiente = posicion;
-        ++siguiente;       // el siguiente se calcula antes de borrar el nodo actual
+        ++siguiente;                                                                
         posicion.del();
         return siguiente;
     }
@@ -120,7 +120,7 @@ public:
 
 private:
     static iterator anteriorA(iterator posicion) {
-        --posicion;  // el elemento recién insertado quedó justo antes de `posicion`
+        --posicion;                                                                 
         return posicion;
     }
 

@@ -1,4 +1,4 @@
-// Pruebas del núcleo (sin framework). Se compilan y ejecutan al construir la imagen de Docker.
+                                                                                               
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -22,13 +22,13 @@ static int fallos = 0;
         if (!(cond)) { std::printf("  FALLO línea %d: %s\n", __LINE__, #cond); ++fallos; } \
     } while (0)
 
-// Domingo 11-oct-2026, 15:00 (hora local)
+                                          
 static std::time_t AHORA() {
     std::tm t{}; t.tm_year = 126; t.tm_mon = 9; t.tm_mday = 11; t.tm_hour = 15; t.tm_isdst = -1;
     return std::mktime(&t);
 }
 
-// Carpeta temporal única por ejecución (antes: nombres fijos, que chocaban entre ejecuciones simultáneas).
+                                                                                                           
 static std::string carpetaTemporal(const char* nombre) {
     auto dir = std::filesystem::temp_directory_path() /
                (std::string("nix_") + nombre + "_" + std::to_string(std::time(nullptr)) + "_" +
@@ -39,7 +39,7 @@ static std::string carpetaTemporal(const char* nombre) {
 }
 
 int main() {
-    setenv("TZ", "UTC", 1);  // las fechas de las pruebas no dependen de la zona de la máquina
+    setenv("TZ", "UTC", 1);                                                                   
     tzset();
     {
         ListaEnlazada<int> lista;
@@ -61,7 +61,7 @@ int main() {
         ListaEnlazada<int> asignada;
         asignada.push_back(99);
         asignada = copia;
-        const ListaEnlazada<int>& alias = asignada;  // autoasignación sin aviso del compilador
+        const ListaEnlazada<int>& alias = asignada;                                            
         asignada = alias;
         CHECK(asignada.comoVector() == std::vector<int>({1, 5}));
 
@@ -115,7 +115,7 @@ int main() {
         CHECK(r.intencion == Intencion::CrearTarea);
         CHECK(r.entidades.asunto == "Clase de la ULA");
         std::tm t = tmLocal(r.entidades.cuando);
-        CHECK(t.tm_hour == 10 && t.tm_mday == 12);  // las 10 de hoy ya pasaron -> mañana
+        CHECK(t.tm_hour == 10 && t.tm_mday == 12);                                       
     }
     {
         auto r = nlu.analizar("Recuérdame entregar el informe mañana a las 8 de la mañana", AHORA());
@@ -161,15 +161,15 @@ int main() {
     CHECK(nlu.analizar("borra todas las tareas de hoy", AHORA()).intencion == Intencion::LimpiarAgendaHoy);
     CHECK(nlu.analizar("blablabla", AHORA()).intencion == Intencion::Desconocida);
 
-    // Flujo completo + persistencia
+                                    
     const std::string dir = carpetaTemporal("test");
     {
         Asistente a(dir, "Homery");
         a.usarReloj(AHORA);
         std::string r1 = a.procesar("Agendar reunión de Programación 3 a las 4");
         std::cout << r1 << "\n";
-        CHECK(r1.find("Homery") != std::string::npos);          // se dirige al usuario
-        CHECK(r1.find("Supuse que era a las 4 de la tarde") != std::string::npos);  // avisa de la hora supuesta
+        CHECK(r1.find("Homery") != std::string::npos);                                 
+        CHECK(r1.find("Supuse que era a las 4 de la tarde") != std::string::npos);                              
         CHECK(a.procesar("hola").find("Todos los sistemas en línea") != std::string::npos);
         CHECK(a.procesar("blablabla").find("Me temo que") != std::string::npos);
         std::cout << a.procesar("Recuérdame entregar el informe mañana a las 8 de la mañana urgente") << "\n";
@@ -179,7 +179,7 @@ int main() {
         std::string lista = a.procesar("¿Qué tengo pendiente?");
         std::cout << lista << "\n";
         CHECK(lista.find("Tiene 3 tareas") != std::string::npos);
-        CHECK(lista.find("1. Entregar el informe") != std::string::npos);  // urgente va primero
+        CHECK(lista.find("1. Entregar el informe") != std::string::npos);                       
         std::cout << a.procesar("ya terminé lo de comprar leche") << "\n";
         CHECK(a.tareas().size() == 3 && a.tareas().back().completada());
         std::cout << a.procesar("elimina la tarea 1") << "\n";
@@ -229,13 +229,13 @@ int main() {
         CHECK(a.tareas().size() == 1);
     }
     {
-        Asistente b(dir, "Homery");  // se recarga desde archivos
+        Asistente b(dir, "Homery");                              
         b.usarReloj(AHORA);
         CHECK(b.tareas().size() == 2);
         CHECK(b.notas().size() == 1 && b.notas()[0].categoria() == "Universidad");
         std::cout << b.procesar("mis notas") << "\n";
     }
-    // ── Inteligencia sin IA: contexto, reprogramar, deshacer, avisos, vencidas, resumen, tolerancia a erratas ──
+                                                                                                                  
     {
         const std::string dir = carpetaTemporal("ctx");
         std::time_t reloj = AHORA();
@@ -247,7 +247,7 @@ int main() {
         CHECK(a.notas().size() == 1 && a.notas()[0].categoria() == "Preferencias" &&
               a.notas()[0].contenido() == "Me gusta vestir de azul");
 
-        // «complétala» se refiere a la última tarea creada
+                                                           
         a.procesar("Agendar reunión de física mañana a las 10");
         std::string c = a.procesar("complétala");
         CHECK(c.find("completada") != std::string::npos && c.find("eunión de física") != std::string::npos);
@@ -255,13 +255,13 @@ int main() {
         CHECK(a.procesar("deshaz eso").find("vuelve a estar pendiente") != std::string::npos);
         CHECK(!a.tareas()[0].completada());
 
-        // «cámbiala para el viernes» conserva la hora; «pásala a las 3» conserva el día
+                                                                                        
         std::string m = a.procesar("cámbiala para el viernes");
         CHECK(m.find("queda para") != std::string::npos);
         CHECK(hora(0).tm_mday == 16 && hora(0).tm_hour == 10);
         a.procesar("pásala a las 3");
         CHECK(hora(0).tm_mday == 16 && hora(0).tm_hour == 15);
-        // deshacer paso a paso: hora, día, creación
+                                                    
         a.procesar("deshaz");
         CHECK(hora(0).tm_mday == 16 && hora(0).tm_hour == 10);
         a.procesar("deshaz");
@@ -270,12 +270,12 @@ int main() {
         CHECK(a.tareas().empty());
         CHECK(a.procesar("deshaz").find("nada que deshacer") != std::string::npos);
 
-        // aviso de solapamiento
+                                
         a.procesar("Agendar dentista mañana a las 4 de la tarde");
         std::string s2 = a.procesar("Agendar reunión con Pedro mañana a las 4:30 de la tarde");
         CHECK(s2.find("se solapan") != std::string::npos && s2.find("Dentista") != std::string::npos);
 
-        // eliminar con contexto y restaurar con el mismo id
+                                                            
         int idPedro = 0;
         for (auto& t : a.tareas()) if (t.titulo().find("Pedro") != std::string::npos) idPedro = t.id();
         CHECK(a.procesar("bórrala").find("He eliminado") != std::string::npos);
@@ -284,12 +284,12 @@ int main() {
         for (auto& t : a.tareas()) if (t.id() == idPedro) volvio = true;
         CHECK(volvio);
 
-        // seguimiento: «¿y mañana?» tras consultar otro día
+                                                            
         CHECK(a.procesar("¿qué tengo hoy?").find("nada programado") != std::string::npos);
         std::string sig = a.procesar("¿y mañana?");
         CHECK(sig.find("Tiene 2 tareas") != std::string::npos && sig.find("Dentista") != std::string::npos);
 
-        // vencidas: la tarea de ayer aparece marcada
+                                                     
         std::filesystem::remove_all(dir);
         std::filesystem::create_directories(dir);
         Asistente b(dir, "señor");
@@ -302,7 +302,7 @@ int main() {
         CHECK(b.procesar("buenos días").find("1 vencida") != std::string::npos);
         std::filesystem::remove_all(dir);
     }
-    {  // tolerancia a errores de escritura, sin falsos positivos
+    {                                                            
         Nlu nlu;
         CHECK(nlu.analizar("agendaar reunión mañana a las 9", AHORA()).intencion == Intencion::CrearTarea);
         CHECK(nlu.analizar("complestala", AHORA()).intencion == Intencion::CompletarTarea);
@@ -313,21 +313,21 @@ int main() {
         CHECK(nlu.analizar("qué pasa con el clima", AHORA()).intencion == Intencion::Desconocida);
     }
 
-    // ── Correcciones de eficiencia y robustez ──
+                                                  
     {
         CHECK(texto::contiene("quiero mi dia libre", "dia libre"));
         CHECK(texto::contiene("hola", "hola") && texto::contiene("buenos dias amigo", "buenos dias"));
-        CHECK(!texto::contiene("agendar", "agenda") && !texto::contiene("desagenda", "agenda"));  // palabra completa
+        CHECK(!texto::contiene("agendar", "agenda") && !texto::contiene("desagenda", "agenda"));                     
         CHECK(!texto::contiene("", "hola") && !texto::contiene("hola", ""));
-        CHECK(texto::contiene("x agenda agendar", "agenda"));  // la primera coincidencia no es de palabra completa
+        CHECK(texto::contiene("x agenda agendar", "agenda"));                                                      
 
-        // prioridad fuera de rango en un archivo dañado -> Media; id negativo -> línea descartada
+                                                                                                  
         auto rara = Tarea::deserializar("5|Tarea|0|0|99|0");
         CHECK(rara && rara->prioridad() == Prioridad::Media);
         CHECK(!Tarea::deserializar("-3|Tarea|0|0|2|0"));
         CHECK(!Tarea::deserializar("basura sin campos"));
 
-        // persistencia atómica: no queda el temporal y el orden se conserva tras recargar
+                                                                                          
         const std::string d = carpetaTemporal("repo");
         {
             Repositorio r(d);
@@ -340,24 +340,24 @@ int main() {
             CHECK(!r.buscarTarea("9", true) && !r.buscarTarea("0", true));
         }
         {
-            Repositorio r(d);  // carga ordenada una sola vez
+            Repositorio r(d);                                
             auto v = r.tareas();
             CHECK(v.size() == 3 && v[0].titulo() == "alta" && v[1].titulo() == "media" && v[2].titulo() == "baja");
             CHECK(r.eliminarTarea(v[0].id()) && !r.eliminarTarea(v[0].id()));
         }
         std::filesystem::remove_all(d);
 
-        // un número enorme ya no lanza std::out_of_range
+                                                         
         Nlu n2;
         bool lanzo = false;
         try { n2.analizar("agendar llamar en 99999999999 dias", AHORA()); } catch (...) { lanzo = true; }
         CHECK(!lanzo);
-        // una orden gigantesca se acota en lugar de saturar las regex
+                                                                      
         bool largaOk = true;
         try { n2.analizar("agendar " + std::string(200000, 'a') + " mañana", AHORA()); } catch (...) { largaOk = false; }
         CHECK(largaOk);
 
-        // entiende() y procesar() comparten el análisis y no alteran el estado
+                                                                               
         Asistente a("", "Homery");
         a.usarReloj(AHORA);
         CHECK(a.entiende("agendar reunión mañana a las 4") && a.tareas().empty());

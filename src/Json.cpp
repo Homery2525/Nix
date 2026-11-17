@@ -23,7 +23,7 @@ void escribirTexto(const std::string& s, std::string& out) {
                     std::snprintf(b, sizeof b, "\\u%04x", c);
                     out += b;
                 } else {
-                    out += static_cast<char>(c);  // el UTF-8 pasa tal cual
+                    out += static_cast<char>(c);                           
                 }
         }
     }
@@ -146,7 +146,7 @@ struct Lector {
     }
 };
 
-}  // namespace
+}              
 
 const Json& Json::at(const std::string& clave) const {
     if (tipo_ == Tipo::Objeto)

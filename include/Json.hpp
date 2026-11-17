@@ -1,4 +1,4 @@
-// Json.hpp - Valor JSON mínimo (lectura y escritura), sin dependencias.
+                                                                        
 #pragma once
 #include <cstddef>
 #include <optional>
@@ -28,7 +28,7 @@ public:
     bool esLista() const { return tipo_ == Tipo::Lista; }
     bool esTexto() const { return tipo_ == Tipo::Texto; }
 
-    // Lectura tolerante: si falta la clave o el tipo no coincide, devuelve el valor por defecto.
+                                                                                                 
     const Json& at(const std::string& clave) const;
     const Json& at(size_t i) const;
     bool contiene(const std::string& clave) const;
@@ -39,9 +39,9 @@ public:
     bool booleano(bool def = false) const { return tipo_ == Tipo::Bool ? b_ : def; }
     const std::vector<Json>& elementos() const { return lista_; }
 
-    // Escritura
-    Json& operator[](const std::string& clave);  // objeto: crea la clave si no existe
-    Json& push(Json v);                          // lista: añade al final
+                
+    Json& operator[](const std::string& clave);                                       
+    Json& push(Json v);                                                  
 
     std::string dump() const;
     static std::optional<Json> parse(const std::string& texto);
@@ -52,6 +52,6 @@ private:
     double n_ = 0;
     std::string s_;
     std::vector<Json> lista_;
-    std::vector<std::string> claves_;  // objeto: claves y valores en paralelo (conserva el orden)
+    std::vector<std::string> claves_;                                                             
     std::vector<Json> valores_;
 };

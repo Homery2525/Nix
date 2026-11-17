@@ -39,7 +39,7 @@ const std::map<std::string, std::string>& estilos() {
     return m;
 }
 
-// Prueba la palabra tal cual y sin su terminación de plural («zapatos», «pantalones», «azules»).
+                                                                                                 
 std::string buscar(const std::map<std::string, std::string>& tabla, const std::string& p) {
     if (auto it = tabla.find(p); it != tabla.end()) return it->second;
     if (p.size() > 3 && p.back() == 's') {
@@ -50,7 +50,7 @@ std::string buscar(const std::map<std::string, std::string>& tabla, const std::s
     return "";
 }
 
-}  // namespace
+}              
 
 std::string categoriaDePalabra(const std::string& palabra) { return buscar(categorias(), palabra); }
 std::string colorDePalabra(const std::string& palabra) { return buscar(colores(), palabra); }
@@ -62,4 +62,4 @@ std::string estiloEnTexto(const std::string& frase) {
     return "";
 }
 
-}  // namespace closet
+}                     

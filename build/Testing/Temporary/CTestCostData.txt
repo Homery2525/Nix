@@ -1,0 +1,7 @@
+tests_fase1 2 0.00260029
+tests_fase2 2 0.00592204
+tests 2 0.00966412
+tests_closet 2 0.00572152
+tests_servidor 2 0.0709275
+tests_api 2 0.111372
+---

@@ -1,4 +1,4 @@
-// HttpServidor.hpp - Servidor HTTP mínimo (sockets POSIX), sin dependencias externas.
+                                                                                      
 #pragma once
 #include <atomic>
 #include <functional>
@@ -7,10 +7,10 @@
 #include <utility>
 #include <vector>
 
-// ───────── Servidor ─────────
+                               
 struct PeticionHttp {
     std::string metodo, ruta, consulta, cuerpo;
-    std::map<std::string, std::string> cabeceras;  // nombres en minúsculas
+    std::map<std::string, std::string> cabeceras;                          
 };
 
 struct RespuestaServidor {
@@ -26,8 +26,8 @@ public:
     ServidorHttp(int puerto, Manejador manejador) : puerto_(puerto), manejador_(std::move(manejador)) {}
     ~ServidorHttp();
 
-    bool iniciar();    // abre el puerto (0 = uno libre); false si falla
-    void ejecutar();   // bucle de aceptación (bloquea hasta detener())
+    bool iniciar();                                                     
+    void ejecutar();                                                   
     void detener();
     int puerto() const { return puerto_; }
 
